@@ -15,6 +15,9 @@ config = {
   createSubscriptionUrl: `${config.avayaBaseUrl}/api/digital/webhook/v1/accounts/${config.accountId}/subscriptions`,
   sendMsgUrl: `${config.avayaBaseUrl}/api/digital/custom-messaging/v1/accounts/${config.accountId}/messages`,
   callbackUrl: "https://connector.lab.bravishma.com/callback",
+  vonageSMSUrl: "https://rahul.lab.bravishma.com/send-vonage-sms",
+  vonageApiKey: "b90a1d65",
+  vonageApiSecret: "Xkzmw60T1nLE8hbj",
 };
 
 // export default {

@@ -7,6 +7,7 @@ import {
   fetchAccessToken,
   createSubscription,
   sendMessage,
+  sendSMS,
 } from "./helpers/index.js";
 
 // async function fu() {
@@ -43,6 +44,12 @@ app.post("/callback", (req, res) => {
       reqBody.senderParticipantType === "SYSTEM"
     ) {
       //  send this data to client/customer
+      let replyMsg = reqBody.body.elementText.text;
+      let recipiant = reqBody.recipientParticipants[0].providerParticipantId;
+      console.log("Recipient=> ", recipiant, "  replyMsg=> ", replyMsg);
+      if (recipiant && replyMsg) {
+        sendSMS(recipiant, replyMsg);
+      }
     } else if (reqBody.senderParticipantType === "CUSTOMER") {
       // do nothing
     }
@@ -54,8 +61,9 @@ app.post("/callback", (req, res) => {
 app.post("/send-message", async (req, res) => {
   console.log("send message called");
   try {
-    let { sender, message } = req.body;
-    let tokenResp = await sendMessage(sender, message);
+    let { sender, message, mobileNo } = req.body;
+    console.log(sender, message, mobileNo);
+    let tokenResp = await sendMessage(sender, message, mobileNo);
     res.send(tokenResp);
   } catch (error) {
     console.log("eeeeeeeeeeeeeeeeeeee========> ", error.detail);
