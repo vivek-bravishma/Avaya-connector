@@ -28,34 +28,41 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const port = process.env.PORT || 3000;
-app.listen(port, () => console.log("server started at ", port));
+app.listen(port, () => console.log("avaya connector server started at ", port));
 
 app.get("/callback", (req, res) => {
   console.log("callback get request");
   res.send("callback url working");
 });
 
-app.post("/callback", (req, res) => {
-  console.log("================= callback post request data =================");
-  const reqBody = req.body;
-  if (reqBody.eventType === "MESSAGES") {
-    if (
-      reqBody.senderParticipantType === "AGENT" ||
-      reqBody.senderParticipantType === "SYSTEM"
-    ) {
-      //  send this data to client/customer
-      let replyMsg = reqBody.body.elementText.text;
-      let recipiant = reqBody.recipientParticipants[0].providerParticipantId;
-      console.log("Recipient=> ", recipiant, "  replyMsg=> ", replyMsg);
-      if (recipiant && replyMsg) {
-        sendSMS(recipiant, replyMsg);
+app.post("/callback", async (req, res) => {
+  try {
+    const reqBody = req.body;
+    console.log(
+      `======== callback post request ${reqBody.eventType} ${reqBody.senderParticipantType} =========`
+    );
+    if (reqBody.eventType === "MESSAGES") {
+      if (
+        reqBody.senderParticipantType === "AGENT" ||
+        reqBody.senderParticipantType === "SYSTEM"
+      ) {
+        //  send this data to client/customer
+        let replyMsg = reqBody.body.elementText.text;
+        let recipiant = reqBody.recipientParticipants[0].providerParticipantId;
+        console.log("Recipient=> ", recipiant, "  replyMsg=> ", replyMsg);
+        if (recipiant && replyMsg) {
+          let smsResp = await sendSMS(recipiant, replyMsg);
+          console.log("sms resp--> ", smsResp.data);
+        }
+      } else if (reqBody.senderParticipantType === "CUSTOMER") {
+        console.log("customer msg --> ", reqBody.body.elementText.text);
       }
-    } else if (reqBody.senderParticipantType === "CUSTOMER") {
-      // do nothing
     }
+    res.send("callback url working");
+  } catch (error) {
+    console.log("error in callback---> ", error);
+    res.send(error);
   }
-  console.log("================= callback post request end =================");
-  res.send("callback url working");
 });
 
 app.post("/send-message", async (req, res) => {

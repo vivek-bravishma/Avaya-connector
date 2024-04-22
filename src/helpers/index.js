@@ -131,7 +131,8 @@ export async function sendSMS(recipiant, replyMsg) {
       api_key: vonageApiKey,
       api_secret: vonageApiSecret,
     };
-    axios.post(vonageSMSUrl);
+    let resp = await axios.post(vonageSMSUrl, payload);
+    return resp;
   } catch (error) {
     console.log("send sms error--", error);
     throw error;
