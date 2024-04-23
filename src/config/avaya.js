@@ -18,6 +18,7 @@ config = {
   vonageSMSUrl: "https://rahul.lab.bravishma.com/send-vonage-sms",
   vonageApiKey: "b90a1d65",
   vonageApiSecret: "Xkzmw60T1nLE8hbj",
+  vonageUrl: "https://messages-sandbox.nexmo.com/v1/messages",
 };
 
 // export default {

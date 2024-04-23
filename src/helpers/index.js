@@ -17,6 +17,7 @@ const {
   vonageSMSUrl,
   vonageApiKey,
   vonageApiSecret,
+  vonageUrl,
 } = avayaConfig;
 
 export async function fetchAccessToken() {
@@ -85,7 +86,7 @@ export async function createSubscription() {
   }
 }
 
-export async function sendMessage(sender, message, mobileNo) {
+export async function sendMessage(sender, message, mobileNo, channel) {
   try {
     let { access_token } = await fetchAccessToken();
 
@@ -98,13 +99,14 @@ export async function sendMessage(sender, message, mobileNo) {
         "content-type": "application/json",
       },
       data: {
-        //   customerIdentifiers: {name: ['bravishma']},
         customerIdentifiers: { mobile: [mobileNo] },
+        customData: { msngChannel: channel },
         body: { elementText: { text: message }, elementType: "text" },
         channelProviderId,
         channelId: "Messaging",
         senderName: sender,
         businessAccountName: integrationId,
+        providerDialogId: channel,
       },
     };
 
@@ -135,6 +137,28 @@ export async function sendSMS(recipiant, replyMsg) {
     return resp;
   } catch (error) {
     console.log("send sms error--", error);
+    throw error;
+  }
+}
+
+export async function sendVonageMsg(
+  to,
+  text,
+  message_type = "text",
+  channel = "whatsapp"
+) {
+  try {
+    const payload = {
+      from: "14157386102",
+      to,
+      message_type,
+      text,
+      channel,
+    };
+    let resp = await axios.post(vonageUrl, payload);
+    return resp;
+  } catch (error) {
+    console.log("send vonage msg error--> ", error);
     throw error;
   }
 }

@@ -51,8 +51,18 @@ app.post("/callback", async (req, res) => {
         let recipiant = reqBody.recipientParticipants[0].providerParticipantId;
         console.log("Recipient=> ", recipiant, "  replyMsg=> ", replyMsg);
         if (recipiant && replyMsg) {
-          let smsResp = await sendSMS(recipiant, replyMsg);
-          console.log("sms resp--> ", smsResp.data);
+          if (reqBody.providerDialogId === "whatsapp") {
+            let vonageResp = await sendVonageMsg(
+              recipiant,
+              replyMsg,
+              "text",
+              "whatsapp"
+            );
+            console.log("vonage resp--> ", vonageResp.data);
+          } else {
+            let smsResp = await sendSMS(recipiant, replyMsg);
+            console.log("sms resp--> ", smsResp.data);
+          }
         }
       } else if (reqBody.senderParticipantType === "CUSTOMER") {
         console.log("customer msg --> ", reqBody.body.elementText.text);
@@ -68,9 +78,9 @@ app.post("/callback", async (req, res) => {
 app.post("/send-message", async (req, res) => {
   console.log("send message called");
   try {
-    let { sender, message, mobileNo } = req.body;
+    let { sender, message, mobileNo, channel } = req.body;
     console.log(sender, message, mobileNo);
-    let tokenResp = await sendMessage(sender, message, mobileNo);
+    let tokenResp = await sendMessage(sender, message, mobileNo, channel);
     res.send(tokenResp);
   } catch (error) {
     console.log("eeeeeeeeeeeeeeeeeeee========> ", error.detail);
@@ -90,7 +100,7 @@ app.post("/vonage-callback", async (req, res) => {
   try {
     let { profile, text, from, channel } = req.body;
     console.log(profile.name, text, from, channel);
-    let tokenResp = await sendMessage(profile.name, text, from);
+    let tokenResp = await sendMessage(profile.name, text, from, channel);
     res.send(tokenResp);
   } catch (error) {
     console.log("eeeeeeeeeeeeeeeeeeee========> ", error.detail);
