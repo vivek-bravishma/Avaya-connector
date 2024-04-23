@@ -77,3 +77,23 @@ app.post("/send-message", async (req, res) => {
     res.send(error);
   }
 });
+
+app.get("/vonage-callback", (req, res) => {
+  console.log("GET vonage-callback");
+  console.log(req.body);
+  res.send("vonage-callback working");
+});
+
+app.post("/vonage-callback", async (req, res) => {
+  console.log("POST vonage-callback");
+  console.log(req.body);
+  try {
+    let { profile, text, from, channel } = req.body;
+    console.log(profile.name, text, from, channel);
+    let tokenResp = await sendMessage(profile.name, text, from);
+    res.send(tokenResp);
+  } catch (error) {
+    console.log("eeeeeeeeeeeeeeeeeeee========> ", error.detail);
+    res.send(error);
+  }
+});
