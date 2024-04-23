@@ -155,7 +155,17 @@ export async function sendVonageMsg(
       text,
       channel,
     };
-    let resp = await axios.post(vonageUrl, payload);
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      auth: {
+        username: "b90a1d65",
+        password: "Xkzmw60T1nLE8hbj",
+      },
+    };
+    let resp = await axios.post(vonageUrl, payload, config);
     return resp;
   } catch (error) {
     console.log("send vonage msg error--> ", error);
