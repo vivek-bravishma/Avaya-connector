@@ -32,6 +32,7 @@ import {
   sendSMS,
   sendVonageMsg,
   sendVonageWhatsappText,
+  sendVonageWhatsappImage,
 } from "./helpers/index.js";
 
 app.use(cors());
@@ -72,10 +73,25 @@ app.post("/callback", async (req, res) => {
         let replyMsg = reqBody.body.elementText.text;
         let recipiant = reqBody.recipientParticipants[0].providerParticipantId;
         console.log("Recipient=> ", recipiant, "  replyMsg=> ", replyMsg);
-        if (recipiant && replyMsg) {
+        // console.log(reqBody);
+        if (recipiant) {
           if (reqBody.providerDialogId === "whatsapp") {
-            let vonageResp = await sendVonageWhatsappText(recipiant, replyMsg);
-            console.log("vonage resp--> ", vonageResp.data);
+            let type = reqBody.body.elementType;
+            console.log("\n\n\nWhatsapp message type : ", type);
+            if (type === "image") {
+              let imageUrl = reqBody.attachments[0].url;
+              let vonageResp = await sendVonageWhatsappImage(
+                recipiant,
+                imageUrl
+              );
+              console.log("vonage image resp--> ", vonageResp.data);
+            } else {
+              let vonageResp = await sendVonageWhatsappText(
+                recipiant,
+                replyMsg
+              );
+              console.log("vonage resp--> ", vonageResp.data);
+            }
           } else {
             let smsResp = await sendSMS(recipiant, replyMsg);
             console.log("sms resp--> ", smsResp.data);
@@ -115,9 +131,18 @@ app.post("/vonage-callback", async (req, res) => {
   console.log("POST vonage-callback");
   console.log(req.body);
   try {
-    let { profile, text, from, channel } = req.body;
-    console.log(profile.name, text, from, channel);
-    let tokenResp = await sendMessage(profile.name, text, from, channel);
+    let { profile, text, from, channel, message_type, image, message_uuid } =
+      req.body;
+    console.log(profile.name, text, from, channel, image, message_uuid);
+    let tokenResp = await sendMessage(
+      profile.name,
+      text,
+      from,
+      channel,
+      message_type,
+      image,
+      message_uuid
+    );
     res.send(tokenResp);
   } catch (error) {
     console.log("eeeeeeeeeeeeeeeeeeee========> ", error.detail);

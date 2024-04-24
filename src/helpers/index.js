@@ -111,9 +111,38 @@ export async function createSubscription() {
   }
 }
 
-export async function sendMessage(sender, message, mobileNo, channel) {
+export async function sendMessage(
+  sender,
+  message,
+  mobileNo,
+  channel,
+  message_type,
+  image,
+  message_uuid
+) {
   try {
     let { access_token } = await fetchAccessToken();
+
+    let body;
+    let attachments = [];
+
+    if (message_type === "text") {
+      body = {
+        elementType: "text",
+        elementText: { text: message },
+      };
+    } else if (message_type === "image") {
+      body = {
+        elementType: "image",
+        elementText: { text: message ? message : "" },
+      };
+      attachments.push({
+        attachmentId: message_uuid,
+        name: image.name,
+        contentType: "image/png",
+        url: image.url,
+      });
+    }
 
     var options = {
       method: "POST",
@@ -126,7 +155,8 @@ export async function sendMessage(sender, message, mobileNo, channel) {
       data: {
         customerIdentifiers: { mobile: [mobileNo] },
         customData: { msngChannel: channel },
-        body: { elementText: { text: message }, elementType: "text" },
+        body: body,
+        attachments,
         channelProviderId,
         channelId: "Messaging",
         senderName: sender,
@@ -210,6 +240,26 @@ export async function sendVonageWhatsappText(to, text) {
     return resp;
   } catch (error) {
     console.log("send vonage whatsapp text error--> ", error);
+    throw error;
+  }
+}
+
+export async function sendVonageWhatsappImage(to, image) {
+  try {
+    console.log("==>sendVonageWhatsappImage");
+    let resp = await vonage.messages.send(
+      new WhatsAppImage({
+        image: {
+          url: image,
+        },
+        to: to,
+        from: vonageWhatsAppNumber,
+      })
+    );
+    console.log("==>sendVonageWhatsappImage Response ", resp);
+    return resp;
+  } catch (error) {
+    console.log("send vonage whatsapp image error--> ", error);
     throw error;
   }
 }
