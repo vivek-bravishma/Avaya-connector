@@ -33,6 +33,8 @@ import {
   sendVonageMsg,
   sendVonageWhatsappText,
   sendVonageWhatsappImage,
+  uploadFileToAvaya,
+  uploadImage,
 } from "./helpers/index.js";
 
 app.use(cors());
@@ -134,14 +136,15 @@ app.post("/vonage-callback", async (req, res) => {
     let { profile, text, from, channel, message_type, image, message_uuid } =
       req.body;
     console.log(profile.name, text, from, channel, image, message_uuid);
+    let fileDetails = await uploadFileToAvaya(image);
+    console.log("fileDetails================> ", fileDetails);
     let tokenResp = await sendMessage(
       profile.name,
       text,
       from,
       channel,
       message_type,
-      image,
-      message_uuid
+      fileDetails
     );
     res.send(tokenResp);
   } catch (error) {

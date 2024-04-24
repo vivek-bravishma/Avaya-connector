@@ -10,6 +10,11 @@ import {
 } from "@vonage/messages";
 
 import avayaConfig from "../config/avaya.js";
+import path from "path";
+
+import { fileURLToPath } from "url";
+import fs from "fs";
+import FormData from "form-data";
 
 const {
   accountId,
@@ -22,6 +27,7 @@ const {
   accessTokenUrl,
   createSubscriptionUrl,
   sendMsgUrl,
+  avayaFileUploadUrl,
   callbackUrl,
   vonageSMSUrl,
   vonageApiKey,
@@ -117,8 +123,7 @@ export async function sendMessage(
   mobileNo,
   channel,
   message_type,
-  image,
-  message_uuid
+  fileDetails
 ) {
   try {
     let { access_token } = await fetchAccessToken();
@@ -137,10 +142,10 @@ export async function sendMessage(
         elementText: { text: message ? message : "" },
       };
       attachments.push({
-        attachmentId: message_uuid,
-        name: image.name,
-        contentType: "image/png",
-        url: image.url,
+        attachmentId: fileDetails.mediaId,
+        // name: image.name,
+        // contentType: "image/png",
+        // url: image.url,
       });
     }
 
@@ -168,6 +173,7 @@ export async function sendMessage(
     let resp = await axios.request(options);
     return resp.data;
   } catch (error) {
+    console.log("wtf error---> ", error);
     if (error.response.data) {
       console.log("sendMessage.error.response.data==> ", error.response.data);
       throw error.response.data;
@@ -261,5 +267,173 @@ export async function sendVonageWhatsappImage(to, image) {
   } catch (error) {
     console.log("send vonage whatsapp image error--> ", error);
     throw error;
+  }
+}
+
+export async function uploadFileToAvaya(media) {
+  try {
+    let fileUrl = media.url;
+    let fileName = media.name;
+    let { access_token } = await fetchAccessToken();
+
+    let { fileType, fileSize, file, fileFullPathName } = await getFileDetails(
+      fileUrl,
+      fileName
+    );
+    console.log(
+      "=====================> ",
+      fileName,
+      fileType,
+      fileSize,
+      fileFullPathName
+    );
+
+    const options = {
+      method: "POST",
+      url: avayaFileUploadUrl,
+      headers: {
+        accept: "application/json",
+        authorization: `Bearer ${access_token}`,
+        "content-type": "application/json",
+      },
+      data: {
+        mediaName: fileName,
+        mediaContentType: fileType,
+        mediaSize: fileSize,
+      },
+    };
+    let resp = await axios.request(options);
+
+    let uploadFilePayload = {
+      file,
+      fileUrl,
+      fileFullPathName,
+      mediaName: resp.data.mediaName,
+      mediaContentType: resp.data.mediaContentType,
+      mediaSize: resp.data.mediaSize,
+      mediaId: resp.data.mediaId,
+      uploadSignedUri: resp.data.uploadSignedUri,
+    };
+
+    let uploadImgResp = await uploadImage(uploadFilePayload);
+    console.log("=================> ", uploadImgResp);
+    return uploadImgResp;
+    // return resp.data;
+  } catch (error) {
+    console.log("Error in uploadFileToAvaya=>  ", error);
+    if (error.response.data) {
+      throw error.response.data;
+    } else {
+      throw error.message;
+    }
+  }
+}
+
+export async function getFileDetails(url, fileName) {
+  try {
+    const response = await axios.get(url, { responseType: "stream" });
+    const contentType = response.headers["content-type"];
+
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
+    const directory = path.join(__dirname, "img");
+    const filePath = path.join(directory, fileName);
+
+    let { fileSize, file, fileFullPathName } = await processFile(
+      response.data,
+      filePath
+    );
+
+    return {
+      fileType: contentType,
+      fileSize,
+      file,
+      fileFullPathName,
+    };
+  } catch (error) {
+    console.error("Error fetching file details:", error.message);
+    return null;
+  }
+}
+
+function processFile(stream, filename) {
+  return new Promise((resolve, reject) => {
+    const fileStream = fs.createWriteStream(filename);
+    let fileSize = 0;
+    let chunks = [];
+
+    stream.on("data", (chunk) => {
+      fileSize += chunk.length;
+      chunks.push(chunk);
+      fileStream.write(chunk);
+    });
+    stream.on("end", () => {
+      fileStream.end();
+      resolve({
+        fileSize,
+        file: Buffer.concat(chunks),
+        fileFullPathName: filename,
+      });
+    });
+    stream.on("error", (error) => {
+      fileStream.close();
+      reject(error);
+    });
+  });
+}
+
+export async function uploadImage(fileDetails) {
+  const {
+    file,
+    fileUrl,
+    fileFullPathName,
+    mediaName,
+    mediaContentType,
+    mediaSize,
+    mediaId,
+    uploadSignedUri,
+  } = fileDetails;
+
+  // console.log("ufo======== ", fileDetails);
+
+  try {
+    // const response = await axios.get(fileUrl, {
+    //   responseType: "arraybuffer",
+    // });
+
+    // const imageBlob = Buffer.from(response.data, "binary");
+    // console.log("imageBlob--> ", imageBlob);
+
+    const formData = new FormData();
+
+    formData.append("mediaName", mediaName);
+    formData.append("mediaContentType", mediaContentType);
+    formData.append("mediaSize", mediaSize);
+    formData.append("mediaId", mediaId);
+    // formData.append("mediaFile", file);
+    formData.append("mediaFile", fs.createReadStream(fileFullPathName));
+
+    const uploadResponse = await axios.post(uploadSignedUri, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        ...formData.getHeaders(),
+      },
+    });
+
+    // console.log("Image uploaded successfully:", uploadResponse.data);
+    return uploadResponse.data;
+  } catch (error) {
+    // console.error("Error uploading image:", error);
+    if (error.response.data) {
+      console.error(
+        "Error uploading image: error.response.data",
+        error.response.data
+      );
+
+      throw error.response.data;
+    } else {
+      console.error("Error uploading image: error", error);
+
+      throw error.message;
+    }
   }
 }

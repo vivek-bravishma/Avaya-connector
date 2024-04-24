@@ -14,6 +14,7 @@ config = {
   accessTokenUrl: `${config.avayaBaseUrl}/api/auth/v1/${config.accountId}/protocol/openid-connect/token`,
   createSubscriptionUrl: `${config.avayaBaseUrl}/api/digital/webhook/v1/accounts/${config.accountId}/subscriptions`,
   sendMsgUrl: `${config.avayaBaseUrl}/api/digital/custom-messaging/v1/accounts/${config.accountId}/messages`,
+  avayaFileUploadUrl: `${config.avayaBaseUrl}/api/media-store/v1/accounts/${config.accountId}/media/signed-upload-uri`,
   callbackUrl: "https://connector.lab.bravishma.com/callback",
   vonageSMSUrl: "https://rahul.lab.bravishma.com/send-vonage-sms",
   vonageApiKey: process.env.VONAGE_API_KEY,
