@@ -123,7 +123,8 @@ export async function sendMessage(
   mobileNo,
   channel,
   message_type,
-  fileDetails
+  fileDetails,
+  locationDetails
 ) {
   try {
     let { access_token } = await fetchAccessToken();
@@ -131,6 +132,7 @@ export async function sendMessage(
     let body;
     let attachments = [];
 
+    console.log("Message Type ==> ", message_type);
     if (message_type === "text") {
       body = {
         elementType: "text",
@@ -147,8 +149,19 @@ export async function sendMessage(
         // contentType: "image/png",
         // url: image.url,
       });
+    } else if (message_type === "location") {
+      body = {
+        elementType: "location",
+        elementText: { text: message ? message : "", textFormat: "PLAINTEXT" },
+        richMediaPayload: {
+          coordinates: {
+            lat: locationDetails.lat,
+            long: locationDetails.long,
+          },
+        },
+      };
     }
-
+    console.log("Sending Message");
     var options = {
       method: "POST",
       url: sendMsgUrl,

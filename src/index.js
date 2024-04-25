@@ -133,10 +133,34 @@ app.post("/vonage-callback", async (req, res) => {
   console.log("POST vonage-callback");
   console.log(req.body);
   try {
-    let { profile, text, from, channel, message_type, image, message_uuid } =
-      req.body;
-    console.log(profile.name, text, from, channel, image, message_uuid);
-    let fileDetails = await uploadFileToAvaya(image);
+    let {
+      profile,
+      text,
+      from,
+      channel,
+      message_type,
+      image,
+      message_uuid,
+      location,
+    } = req.body;
+    console.log(
+      profile.name,
+      text,
+      from,
+      channel,
+      image,
+      message_uuid,
+      location
+    );
+
+    let fileDetails = undefined;
+    let locationDetails = undefined;
+    if (message_type === "image") {
+      fileDetails = await uploadFileToAvaya(image);
+    } else if (message_type === "location") {
+      locationDetails = location;
+    }
+
     console.log("fileDetails================> ", fileDetails);
     let tokenResp = await sendMessage(
       profile.name,
@@ -144,11 +168,24 @@ app.post("/vonage-callback", async (req, res) => {
       from,
       channel,
       message_type,
-      fileDetails
+      fileDetails,
+      locationDetails
     );
     res.send(tokenResp);
   } catch (error) {
     console.log("eeeeeeeeeeeeeeeeeeee========> ", error.detail);
     res.send(error);
   }
+});
+
+app.post("/line-callback", async (req, res) => {
+  console.log("POST line-callback");
+  console.log(req.body);
+  res.send("OK");
+});
+
+app.post("/viber-callback", async (req, res) => {
+  console.log("POST viber-callback");
+  console.log(req.body);
+  res.send("OK");
 });
