@@ -75,7 +75,14 @@ app.post("/callback", async (req, res) => {
         //  send this data to client/customer
         let replyMsg = reqBody.body.elementText.text;
         let recipiant = reqBody.recipientParticipants[0].providerParticipantId;
-        console.log("Recipient=> ", recipiant, "  replyMsg=> ", replyMsg);
+        console.log(
+          "Recipient=> ",
+          recipiant,
+          "  replyMsg=> ",
+          replyMsg,
+          "   providerDialogId=> ",
+          reqBody.providerDialogId
+        );
         // console.log(reqBody);
         if (recipiant) {
           if (reqBody.providerDialogId === "whatsapp") {
@@ -99,6 +106,8 @@ app.post("/callback", async (req, res) => {
               );
               console.log("vonage resp--> ", vonageResp.data);
             }
+          } else if (reqBody.providerDialogId === "Line") {
+            console.log("Handle Line messages here");
           } else {
             let smsResp = await sendSMS(recipiant, replyMsg);
             console.log("sms resp--> ", smsResp.data);
@@ -206,7 +215,41 @@ app.post("/vonage-callback", async (req, res) => {
 
 app.post("/line-callback", async (req, res) => {
   console.log("POST line-callback");
-  console.log(JSON.stringify(req.body));
+  console.log(req.body);
+  try {
+    let { events } = req.body;
+    let fileDetails = undefined;
+    let locationDetails = undefined;
+
+    if (events.length > 0) {
+      let messageEvent = events[0];
+      let messageType = messageEvent.type;
+      console.log("MessageType : " + messageType);
+
+      if (messageType === "message") {
+        let tokenResp = await sendMessage(
+          messageEvent.source.userId,
+          messageEvent.message.text,
+          messageEvent.source.userId,
+          "Line",
+          messageType,
+          fileDetails,
+          locationDetails
+        );
+        res.send(tokenResp);
+      } else if (messageType === "image") {
+      } else if (messageType === "location") {
+      } else if (messageType === "audio") {
+      } else if (messageType === "video") {
+      } else if (messageType === "sticker") {
+      } else {
+        console.log("Message type not supported.");
+      }
+    }
+  } catch (error) {
+    console.log("line-callback error========> ", error.detail);
+    res.send(error);
+  }
   res.send("OK");
 });
 

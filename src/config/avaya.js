@@ -24,6 +24,8 @@ config = {
   vonageWhatsAppNumber: "14157386102",
   vonageUrl: "https://messages-sandbox.nexmo.com/v1/messages",
   vonage_BASE_URL: "https://messages-sandbox.nexmo.com",
+  lineMessageUrl: " https://api.line.me/v2/bot/message/push",
+  lineToken: process.env.LINE_TOKEN,
 };
 
 // export default {

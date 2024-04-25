@@ -37,6 +37,8 @@ const {
   vonageWhatsAppNumber,
   vonageUrl,
   vonage_BASE_URL,
+  lineMessageUrl,
+  lineToken,
 } = avayaConfig;
 
 const vonage = new Vonage(
@@ -133,7 +135,10 @@ export async function sendMessage(
     let attachments = [];
 
     console.log("Message Type ==> ", message_type);
-    if (message_type === "text") {
+    if (
+      message_type === "text" ||
+      (message_type === "message" && channel === "Line")
+    ) {
       body = {
         elementType: "text",
         elementText: { text: message },
