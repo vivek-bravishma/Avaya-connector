@@ -163,6 +163,14 @@ export async function sendMessage(
 					},
 				},
 			};
+		} else if (message_type === "file") {
+			body = {
+				elementType: "image",
+				elementText: { text: message ? message : "" },
+			};
+			attachments.push({
+				attachmentId: fileDetails.mediaId,
+			});
 		}
 		console.log("Sending Message");
 		var options = {
