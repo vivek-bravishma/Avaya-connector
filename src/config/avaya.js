@@ -25,7 +25,8 @@ config = {
   vonageUrl: "https://messages-sandbox.nexmo.com/v1/messages",
   vonage_BASE_URL: "https://messages-sandbox.nexmo.com",
   lineMessageUrl: " https://api.line.me/v2/bot/message/push",
-  lineToken: process.env.LINE_TOKEN,
+  lineToken:
+    "7vm3N0qNPBv2aSC+2aYvz/++w53S57kFVIC/72IQeIR4AxfX/kmO+3Sm4JSMNL893waGJcfsCrGzwt6jkw9OAo4oorjfxzLFcMO/mHmMIuufiCXQifHokpwDvgcuTUq8JCx/4KqsBYKPsKuk+UZtzwdB04t89/1O/w1cDnyilFU=",
 };
 
 // export default {

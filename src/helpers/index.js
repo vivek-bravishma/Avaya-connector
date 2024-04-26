@@ -135,10 +135,7 @@ export async function sendMessage(
     let attachments = [];
 
     console.log("Message Type ==> ", message_type);
-    if (
-      message_type === "text" ||
-      (message_type === "message" && channel === "Line")
-    ) {
+    if (message_type === "text") {
       body = {
         elementType: "text",
         elementText: { text: message },
@@ -168,15 +165,16 @@ export async function sendMessage(
           },
         },
       };
-    } else if (message_type === "file") {
-      body = {
-        elementType: "image",
-        elementText: { text: message ? message : "" },
-      };
-      attachments.push({
-        attachmentId: fileDetails.mediaId,
-      });
     }
+    // else if (message_type === "file") {
+    //   body = {
+    //     elementType: "file",
+    //     elementText: { text: message ? message : "" },
+    //   };
+    //   attachments.push({
+    //     attachmentId: fileDetails.mediaId,
+    //   });
+    // }
     console.log("Sending Message");
     var options = {
       method: "POST",
@@ -190,7 +188,7 @@ export async function sendMessage(
         customerIdentifiers: { mobile: [mobileNo] },
         customData: { msngChannel: channel },
         body: body,
-        attachments,
+        // attachments,
         channelProviderId,
         channelId: "Messaging",
         senderName: sender,
@@ -199,7 +197,10 @@ export async function sendMessage(
       },
     };
 
+    console.log("options=============> ", JSON.stringify(options));
+
     let resp = await axios.request(options);
+    console.log("send message response data==> ", resp.data);
     return resp.data;
   } catch (error) {
     if (error.response.data) {
@@ -483,5 +484,68 @@ export async function uploadImage(fileDetails) {
 
       throw error.message;
     }
+  }
+}
+
+export async function sendLineTextMessage(
+  to,
+  text,
+  message_type = "text",
+  channel = "Line"
+) {
+  try {
+    const payload = {
+      to: to,
+      messages: [
+        {
+          type: message_type,
+          text: text,
+        },
+      ],
+    };
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${lineToken}`,
+      },
+    };
+    let resp = await axios.post(lineMessageUrl, payload, config);
+    return resp;
+  } catch (error) {
+    console.log("send line msg error--> ", error);
+    throw error;
+  }
+}
+
+export async function sendLineImageMessage(
+  to,
+  imageUrl,
+  message_type = "image",
+  channel = "Line"
+) {
+  try {
+    const payload = {
+      to: to,
+      messages: [
+        {
+          type: message_type,
+          originalContentUrl: imageUrl,
+          previewImageUrl: imageUrl,
+        },
+      ],
+    };
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${lineToken}`,
+      },
+    };
+    let resp = await axios.post(lineMessageUrl, payload, config);
+    return resp;
+  } catch (error) {
+    console.log("send line msg error--> ", error);
+    throw error;
   }
 }

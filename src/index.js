@@ -36,6 +36,8 @@ import {
   uploadFileToAvaya,
   uploadImage,
   sendVonageWhatsappFile,
+  sendLineTextMessage,
+  sendLineImageMessage,
 } from "./helpers/index.js";
 
 app.use(cors());
@@ -51,16 +53,10 @@ app.listen(port, () => {
 });
 
 app.get("/test", async (req, res) => {
-  let fu = await sendVonageWhatsappText("909898767887", "textfdsa");
-  console.log("fu=======> ", fu);
-  res.send(fu);
+  res.send("api working");
 });
 
-app.get("/callback", (req, res) => {
-  console.log("callback get request");
-  res.send("callback url working");
-});
-
+// callback for avaya
 app.post("/callback", async (req, res) => {
   try {
     const reqBody = req.body;
@@ -108,6 +104,25 @@ app.post("/callback", async (req, res) => {
             }
           } else if (reqBody.providerDialogId === "Line") {
             console.log("Handle Line messages here");
+            let type = reqBody.body.elementType;
+            console.log("\n\nLine message type : ", type);
+
+            if (type === "text") {
+              let lineResponse = await sendLineTextMessage(
+                recipiant,
+                replyMsg,
+                type,
+                reqBody.providerDialogId
+              );
+            } else if (type === "image") {
+              let imageUrl = reqBody.attachments[0].url;
+              let lineResponse = await sendLineImageMessage(
+                recipiant,
+                imageUrl,
+                type,
+                reqBody.providerDialogId
+              );
+            }
           } else {
             let smsResp = await sendSMS(recipiant, replyMsg);
             console.log("sms resp--> ", smsResp.data);
@@ -137,12 +152,6 @@ app.post("/send-message", async (req, res) => {
   }
 });
 
-app.get("/vonage-callback", (req, res) => {
-  console.log("GET vonage-callback");
-  console.log(req.body);
-  res.send("vonage-callback working");
-});
-
 app.post("/vonage-callback", async (req, res) => {
   console.log("POST vonage-callback");
   console.log(req.body);
@@ -162,15 +171,25 @@ app.post("/vonage-callback", async (req, res) => {
     } = req.body;
 
     console.log(
+      "\n profile.name=>",
       profile.name,
+      "\n text=>",
       text,
+      "\n from=>",
       from,
+      "\n channel=>",
       channel,
+      "\n image=>",
       image,
+      "\n audio=>",
       audio,
+      "\n video=>",
       video,
+      "\n file=>",
       file,
+      "\n message_uuid=>",
       message_uuid,
+      "\n locatio=>",
       location
     );
 
@@ -182,6 +201,7 @@ app.post("/vonage-callback", async (req, res) => {
       message_type === "file" ||
       message_type === "video"
     ) {
+      console.log("here=============================");
       let resourceFile = image
         ? image
         : audio
@@ -215,7 +235,7 @@ app.post("/vonage-callback", async (req, res) => {
 
 app.post("/line-callback", async (req, res) => {
   console.log("POST line-callback");
-  console.log(req.body);
+  console.log(JSON.stringify(req.body));
   try {
     let { events } = req.body;
     let fileDetails = undefined;
@@ -223,12 +243,12 @@ app.post("/line-callback", async (req, res) => {
 
     if (events.length > 0) {
       let messageEvent = events[0];
-      let messageType = messageEvent.type;
+      let messageType = messageEvent.message.type;
       console.log("MessageType : " + messageType);
 
-      if (messageType === "message") {
+      if (messageType === "text") {
         let tokenResp = await sendMessage(
-          messageEvent.source.userId,
+          messageEvent.source.type,
           messageEvent.message.text,
           messageEvent.source.userId,
           "Line",
@@ -238,10 +258,27 @@ app.post("/line-callback", async (req, res) => {
         );
         res.send(tokenResp);
       } else if (messageType === "image") {
+        console.log("Image Message type not supported.");
       } else if (messageType === "location") {
+        locationDetails = {
+          lat: messageEvent.message.latitude,
+          long: messageEvent.message.longitude,
+        };
+        let tokenResp = await sendMessage(
+          messageEvent.source.type,
+          messageEvent.message.address,
+          messageEvent.source.userId,
+          "Line",
+          messageType,
+          fileDetails,
+          locationDetails
+        );
       } else if (messageType === "audio") {
+        console.log("Audio Message type not supported.");
       } else if (messageType === "video") {
+        console.log("Video Message type not supported.");
       } else if (messageType === "sticker") {
+        console.log("Sticker Message type not supported.");
       } else {
         console.log("Message type not supported.");
       }
