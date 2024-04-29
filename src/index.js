@@ -38,6 +38,7 @@ import {
   sendVonageWhatsappFile,
   sendLineTextMessage,
   sendLineImageMessage,
+  sendVonageViberText,
 } from "./helpers/index.js";
 
 app.use(cors());
@@ -123,9 +124,27 @@ app.post("/callback", async (req, res) => {
                 reqBody.providerDialogId
               );
             }
+          } else if (reqBody.providerDialogId === "viber_service") {
+            let type = reqBody.body.elementType;
+            console.log("\n\n\n viber message type : ", type);
+            if (type === "image") {
+              let imageUrl = reqBody.attachments[0].url;
+              let vonageResp = await sendVonageWhatsappImage(
+                recipiant,
+                imageUrl
+              );
+              console.log("vonage image resp--> ", vonageResp.data);
+            } else if (type === "file") {
+              let fileUrl = reqBody.attachments[0].url;
+              let vonageResp = await sendVonageWhatsappFile(recipiant, fileUrl);
+              console.log("vonage file resp--> ", vonageResp.data);
+            } else {
+              let vonageResp = await sendVonageViberText(recipiant, replyMsg);
+              console.log("vonage resp--> ", vonageResp.data);
+            }
           } else {
-            let smsResp = await sendSMS(recipiant, replyMsg);
-            console.log("sms resp--> ", smsResp.data);
+            // let smsResp = await sendSMS(recipiant, replyMsg);
+            // console.log("sms resp--> ", smsResp.data);
           }
         }
       } else if (reqBody.senderParticipantType === "CUSTOMER") {
@@ -147,7 +166,7 @@ app.post("/send-message", async (req, res) => {
     let tokenResp = await sendMessage(sender, message, mobileNo, channel);
     res.send(tokenResp);
   } catch (error) {
-    console.log("eeeeeeeeeeeeeeeeeeee========> ", error.detail);
+    console.log("Error in vonage-callback========> ", error.detail);
     res.send(error);
   }
 });
@@ -168,11 +187,12 @@ app.post("/vonage-callback", async (req, res) => {
       file,
       message_uuid,
       location,
+      context,
     } = req.body;
 
     console.log(
       "\n profile.name=>",
-      profile.name,
+      profile?.name,
       "\n text=>",
       text,
       "\n from=>",
@@ -192,6 +212,14 @@ app.post("/vonage-callback", async (req, res) => {
       "\n locatio=>",
       location
     );
+
+    let sender;
+
+    if (channel === "viber_service") {
+      sender = context.message_from;
+    } else {
+      sender = profile.name;
+    }
 
     let fileDetails = undefined;
     let locationDetails = undefined;
@@ -218,7 +246,7 @@ app.post("/vonage-callback", async (req, res) => {
 
     console.log("fileDetails================> ", fileDetails);
     let tokenResp = await sendMessage(
-      profile.name,
+      sender,
       text,
       from,
       channel,
@@ -228,7 +256,7 @@ app.post("/vonage-callback", async (req, res) => {
     );
     res.send(tokenResp);
   } catch (error) {
-    console.log("eeeeeeeeeeeeeeeeeeee========> ", error.detail);
+    console.log("Error in vonage-callback========> ", error);
     res.send(error);
   }
 });

@@ -7,6 +7,9 @@ import {
   WhatsAppAudio,
   WhatsAppImage,
   WhatsAppFile,
+  ViberFile,
+  ViberText,
+  ViberImage,
 } from "@vonage/messages";
 
 import avayaConfig from "../config/avaya.js";
@@ -39,6 +42,7 @@ const {
   vonage_BASE_URL,
   lineMessageUrl,
   lineToken,
+  VIBER_SERVICE_MESSAGE_ID,
 } = avayaConfig;
 
 const vonage = new Vonage(
@@ -197,7 +201,7 @@ export async function sendMessage(
       },
     };
 
-    console.log("options=============> ", JSON.stringify(options));
+    // console.log("options=============> ", JSON.stringify(options));
 
     let resp = await axios.request(options);
     console.log("send message response data==> ", resp.data);
@@ -546,6 +550,22 @@ export async function sendLineImageMessage(
     return resp;
   } catch (error) {
     console.log("send line msg error--> ", error);
+    throw error;
+  }
+}
+
+export async function sendVonageViberText(to, text) {
+  try {
+    let resp = await vonage.messages.send(
+      new ViberText({
+        text,
+        to,
+        from: VIBER_SERVICE_MESSAGE_ID,
+      })
+    );
+    return resp;
+  } catch (error) {
+    console.log("send vonage viber text error--> ", error);
     throw error;
   }
 }

@@ -24,6 +24,8 @@ config = {
   vonageWhatsAppNumber: "14157386102",
   vonageUrl: "https://messages-sandbox.nexmo.com/v1/messages",
   vonage_BASE_URL: "https://messages-sandbox.nexmo.com",
+  // VIBER_SERVICE_MESSAGE_ID: "16273",
+  VIBER_SERVICE_MESSAGE_ID: "22353",
   lineMessageUrl: " https://api.line.me/v2/bot/message/push",
   lineToken:
     "7vm3N0qNPBv2aSC+2aYvz/++w53S57kFVIC/72IQeIR4AxfX/kmO+3Sm4JSMNL893waGJcfsCrGzwt6jkw9OAo4oorjfxzLFcMO/mHmMIuufiCXQifHokpwDvgcuTUq8JCx/4KqsBYKPsKuk+UZtzwdB04t89/1O/w1cDnyilFU=",
