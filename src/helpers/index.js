@@ -192,7 +192,7 @@ export async function sendMessage(
         customerIdentifiers: { mobile: [mobileNo] },
         customData: { msngChannel: channel },
         body: body,
-        // attachments,
+        attachments,
         channelProviderId,
         channelId: "Messaging",
         senderName: sender,
