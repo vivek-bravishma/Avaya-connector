@@ -144,18 +144,20 @@ export async function sendMessage(
 				elementType: 'text',
 				elementText: { text: message },
 			}
-		} else if (message_type === 'image') {
+		} else if (
+			message_type === 'image' ||
+			message_type === 'audio' ||
+			message_type === 'video' ||
+			message_type === 'file'
+		) {
 			body = {
-				elementType: 'image',
+				elementType: message_type,
 				elementText: {
 					text: message ? message : '',
 				},
 			}
 			attachments.push({
 				attachmentId: fileDetails.mediaId,
-				// name: image.name,
-				// contentType: "image/png",
-				// url: image.url,
 			})
 		} else if (message_type === 'location') {
 			body = {
@@ -172,15 +174,6 @@ export async function sendMessage(
 				},
 			}
 		}
-		// else if (message_type === "file") {
-		//   body = {
-		//     elementType: "file",
-		//     elementText: { text: message ? message : "" },
-		//   };
-		//   attachments.push({
-		//     attachmentId: fileDetails.mediaId,
-		//   });
-		// }
 		console.log('Sending Message')
 		var options = {
 			method: 'POST',
@@ -452,24 +445,12 @@ export async function uploadImage(fileDetails) {
 		mediaId,
 		uploadSignedUri,
 	} = fileDetails
-
-	// console.log("ufo======== ", fileDetails);
-
 	try {
-		// const response = await axios.get(fileUrl, {
-		//   responseType: "arraybuffer",
-		// });
-
-		// const imageBlob = Buffer.from(response.data, "binary");
-		// console.log("imageBlob--> ", imageBlob);
-
 		const formData = new FormData()
-
 		formData.append('mediaName', mediaName)
 		formData.append('mediaContentType', mediaContentType)
 		formData.append('mediaSize', mediaSize)
 		formData.append('mediaId', mediaId)
-		// formData.append("mediaFile", file);
 		formData.append('mediaFile', fs.createReadStream(fileFullPathName))
 
 		const uploadResponse = await axios.post(uploadSignedUri, formData, {
@@ -479,10 +460,9 @@ export async function uploadImage(fileDetails) {
 			},
 		})
 
-		// console.log("Image uploaded successfully:", uploadResponse.data);
 		return uploadResponse.data
 	} catch (error) {
-		// console.error("Error uploading image:", error);
+		console.log('uplaod error===> ', error)
 		if (error.response.data) {
 			console.error(
 				'Error uploading image: error.response.data',

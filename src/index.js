@@ -206,29 +206,6 @@ app.post('/vonage-callback', async (req, res) => {
 			context,
 		} = req.body
 
-		console.log(
-			'\n profile.name=>',
-			profile?.name,
-			'\n text=>',
-			text,
-			'\n from=>',
-			from,
-			'\n channel=>',
-			channel,
-			'\n image=>',
-			image,
-			'\n audio=>',
-			audio,
-			'\n video=>',
-			video,
-			'\n file=>',
-			file,
-			'\n message_uuid=>',
-			message_uuid,
-			'\n locatio=>',
-			location
-		)
-
 		let sender
 
 		if (channel === 'viber_service') {
@@ -242,10 +219,9 @@ app.post('/vonage-callback', async (req, res) => {
 		if (
 			message_type === 'image' ||
 			message_type === 'audio' ||
-			message_type === 'file' ||
-			message_type === 'video'
+			message_type === 'video' ||
+			message_type === 'file'
 		) {
-			console.log('here=============================')
 			let resourceFile = image
 				? image
 				: audio
