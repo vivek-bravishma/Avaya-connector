@@ -147,7 +147,9 @@ export async function sendMessage(
 		} else if (message_type === 'image') {
 			body = {
 				elementType: 'image',
-				elementText: { text: message ? message : '' },
+				elementText: {
+					text: message ? message : '',
+				},
 			}
 			attachments.push({
 				attachmentId: fileDetails.mediaId,
@@ -189,7 +191,9 @@ export async function sendMessage(
 				'content-type': 'application/json',
 			},
 			data: {
-				customerIdentifiers: { mobile: [mobileNo] },
+				customerIdentifiers: {
+					mobile: [mobileNo],
+				},
 				customData: { msngChannel: channel },
 				body: body,
 				attachments,
@@ -385,7 +389,9 @@ export async function uploadFileToAvaya(media) {
 
 export async function getFileDetails(url, fileName) {
 	try {
-		const response = await axios.get(url, { responseType: 'stream' })
+		const response = await axios.get(url, {
+			responseType: 'stream',
+		})
 		const contentType = response.headers['content-type']
 
 		const __dirname = path.dirname(fileURLToPath(import.meta.url))
