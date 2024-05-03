@@ -198,7 +198,7 @@ export async function sendMessage(
 			},
 		}
 
-		// console.log("options=============> ", JSON.stringify(options));
+		// console.log('options=============> ', JSON.stringify(options))
 
 		let resp = await axios.request(options)
 		console.log('send message response data==> ', resp.data)
@@ -221,13 +221,16 @@ export async function sendSMS(recipiant, replyMsg) {
 	// { from, text, to, api_key, api_secret }
 	try {
 		const payload = {
-			from: 'ayva',
+			from: '447451277709',
 			text: replyMsg,
 			to: recipiant,
 			api_key: vonageApiKey,
 			api_secret: vonageApiSecret,
 		}
-		let resp = await axios.post(vonageSMSUrl, payload)
+		let vonageUrl = 'https://rest.nexmo.com/sms/json'
+
+		let vonageResponse = await axios.post(vonageUrl, vonagePayload)
+		// let resp = await axios.post(vonageSMSUrl, payload)
 		return resp
 	} catch (error) {
 		console.log('send sms error--', error)
@@ -327,12 +330,14 @@ export async function uploadFileToAvaya(media) {
 	try {
 		let fileUrl = media.url
 		let fileName = media.name
+		let message_type = media.message_type
 		let { access_token } = await fetchAccessToken()
+		console.log('media---------------------------> ', media)
 
 		let { fileType, fileSize, file, fileFullPathName } =
 			await getFileDetails(fileUrl, fileName)
 		console.log(
-			'=====================> ',
+			'===========asdf==========> ',
 			fileName,
 			fileType,
 			fileSize,
@@ -350,9 +355,17 @@ export async function uploadFileToAvaya(media) {
 			data: {
 				mediaName: fileName,
 				mediaContentType: fileType,
+				// mediaContentType:
+				// 	message_type === 'audio'
+				// 		? `audio/opus`
+				// 		: message_type === 'video'
+				// 			? `video/mp4`
+				// 			: fileType,
 				mediaSize: fileSize,
 			},
 		}
+
+		console.log('============== generate file url payload==> ', options)
 		let resp = await axios.request(options)
 
 		let uploadFilePayload = {
@@ -385,7 +398,8 @@ export async function getFileDetails(url, fileName) {
 		const response = await axios.get(url, {
 			responseType: 'stream',
 		})
-		const contentType = response.headers['content-type']
+		const contentType = response.headers['content-type'].split(';')[0]
+		console.log('content type== > ', contentType)
 
 		const __dirname = path.dirname(fileURLToPath(import.meta.url))
 		const directory = path.join(__dirname, 'img')
@@ -453,6 +467,16 @@ export async function uploadImage(fileDetails) {
 		formData.append('mediaId', mediaId)
 		formData.append('mediaFile', fs.createReadStream(fileFullPathName))
 
+		console.log(
+			'========== upload file payload ================',
+			uploadSignedUri,
+			formData
+		)
+		console.log(
+			'fs.createReadStream(fileFullPathName)------------------------> ',
+			await fs.createReadStream(fileFullPathName)
+		)
+
 		const uploadResponse = await axios.post(uploadSignedUri, formData, {
 			headers: {
 				'Content-Type': 'multipart/form-data',
@@ -462,7 +486,6 @@ export async function uploadImage(fileDetails) {
 
 		return uploadResponse.data
 	} catch (error) {
-		console.log('uplaod error===> ', error)
 		if (error.response.data) {
 			console.error(
 				'Error uploading image: error.response.data',

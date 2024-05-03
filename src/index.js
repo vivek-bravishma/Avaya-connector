@@ -81,7 +81,10 @@ app.post('/callback', async (req, res) => {
 					'   providerDialogId=> ',
 					reqBody.providerDialogId
 				)
-				// console.log(reqBody);
+				console.log(
+					'============================================= ',
+					reqBody
+				)
 				if (recipiant) {
 					if (reqBody.providerDialogId === 'whatsapp') {
 						let type = reqBody.body.elementType
@@ -159,8 +162,8 @@ app.post('/callback', async (req, res) => {
 							console.log('vonage resp--> ', vonageResp.data)
 						}
 					} else {
-						// let smsResp = await sendSMS(recipiant, replyMsg);
-						// console.log("sms resp--> ", smsResp.data);
+						let smsResp = await sendSMS(recipiant, replyMsg)
+						console.log('sms resp--> ', smsResp.data)
 					}
 				}
 			} else if (reqBody.senderParticipantType === 'CUSTOMER') {
@@ -187,9 +190,45 @@ app.post('/send-message', async (req, res) => {
 	}
 })
 
+app.get('/vonage-callback', async (req, res) => {
+	console.log('GET vonage-callback')
+	console.log(req.query)
+
+	// query: {
+	//   msisdn: '6596542183',
+	//   to: '12015009339',
+	//   messageId: '3F000000592D437E',
+	//   text: 'Hi',
+	//   type: 'text',
+	//   keyword: 'HI',
+	//   'api-key': 'b90a1d65',
+	//   'message-timestamp': '2024-04-30 11:36:44'
+	// }
+
+	try {
+		let { msisdn, to, messageId, text, type, keyword } = req.query
+		let tokenResp = await sendMessage(msisdn, text, msisdn, 'sms', type)
+		res.send(tokenResp)
+	} catch (error) {
+		console.log('vonage get callback error ', error)
+		res.send(error)
+	}
+})
+
 app.post('/vonage-callback', async (req, res) => {
 	console.log('POST vonage-callback')
 	console.log(req.body)
+	// {
+	//   "to": "14157386102",
+	//   "from": "919028477947",
+	//   "channel": "whatsapp",
+	//   "message_uuid": "8232c01c-9d21-4161-97d4-8f672398144d",
+	//   "timestamp": "2024-04-30T12:20:03Z",
+	//   "message_type": "text",
+	//   "text": "Whatsup",
+	//   "context_status": "none",
+	//   "profile": { "name": "Vivek Nishad" }
+	// }
 	try {
 		let {
 			profile,
@@ -231,6 +270,7 @@ app.post('/vonage-callback', async (req, res) => {
 						: file
 							? file
 							: undefined
+			resourceFile.message_type = message_type
 			fileDetails = await uploadFileToAvaya(resourceFile)
 		} else if (message_type === 'location') {
 			locationDetails = location
