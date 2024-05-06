@@ -70,6 +70,16 @@ app.get('/test', async (req, res) => {
 	res.send('api working')
 })
 
+app.get('/customer-details', async (req, res) => {
+	await Customer.find()
+		.then((customers) => {
+			res.send(customers)
+		})
+		.catch((err) => {
+			res.send(err)
+		})
+})
+
 // callback for avaya
 app.post('/callback', async (req, res) => {
 	try {
