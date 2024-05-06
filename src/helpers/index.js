@@ -195,6 +195,12 @@ export async function sendMessage(
 				senderName: sender,
 				businessAccountName: integrationId,
 				providerDialogId: channel,
+				// headers: {
+				// 	additionalHeaders: {
+				// 		newKey: 'New Value',
+				// 	},
+				// 	sourceType: 'facebook',
+				// },
 			},
 		}
 

@@ -1,6 +1,10 @@
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
+import mongoose from 'mongoose'
+
+import Customer from './models/avayaconnector/customer.js'
+
 const app = express()
 
 // import avayaConfig from "./config/avaya.js";
@@ -52,6 +56,15 @@ app.listen(port, () => {
 	)
 	console.log('avaya connector server started at ', port)
 })
+
+mongoose
+	.connect(
+		'mongodb+srv://vivek:xmM6t85qbIHWlgZx@vivek-custer.kk8uhws.mongodb.net/avayaConnector?retryWrites=true&w=majority&appName=ViveK-Custer'
+	)
+	.then(
+		() => console.log('connected to db'),
+		(err) => console.log('Error connecting db', err)
+	)
 
 app.get('/test', async (req, res) => {
 	res.send('api working')
@@ -168,6 +181,37 @@ app.post('/callback', async (req, res) => {
 				}
 			} else if (reqBody.senderParticipantType === 'CUSTOMER') {
 				console.log('customer msg --> ', reqBody.body.elementText.text)
+
+				let resipntPartyCustProPartyId =
+					reqBody.recipientParticipants?.filter(
+						(party) => party.participantType === 'CUSTOMER'
+					)[0]?.providerParticipantId
+
+				let avayaCustomer = await Customer.findOne({
+					providerParticipantId: resipntPartyCustProPartyId,
+				})
+
+				console.log('avayaCustomker===> ', avayaCustomer)
+
+				if (!avayaCustomer) {
+					let resipntPartyCustConnId =
+						reqBody.recipientParticipants?.filter(
+							(party) => party.participantType === 'CUSTOMER'
+						)[0]?.connectionId
+
+					const customerData = {
+						customerName: reqBody?.senderParticipantName,
+						channel: reqBody?.providerDialogId,
+						engagementId: reqBody?.engagementId,
+						providerParticipantId: resipntPartyCustProPartyId,
+						correlationId: reqBody?.correlationId,
+						dialogId: reqBody?.dialogId,
+						connectionId: resipntPartyCustConnId,
+					}
+					console.log('customerDAt ', customerData)
+					const avayaCustomer = new Customer(customerData)
+					await avayaCustomer.save()
+				}
 			}
 		}
 		res.send('callback url working')
