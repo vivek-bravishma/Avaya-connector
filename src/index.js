@@ -3,31 +3,11 @@ import express from 'express'
 import cors from 'cors'
 import mongoose from 'mongoose'
 
+import { createServer } from 'http'
+import { Server } from 'socket.io'
+import path from 'path'
+
 import Customer from './models/avayaconnector/customer.js'
-
-const app = express()
-
-// import avayaConfig from "./config/avaya.js";
-// const {
-//   accountId,
-//   client_id,
-//   client_secret,
-//   channelProviderId,
-//   integrationId,
-//   integrationName,
-//   grant_type,
-//   accessTokenUrl,
-//   createSubscriptionUrl,
-//   sendMsgUrl,
-//   callbackUrl,
-//   vonageSMSUrl,
-//   vonageApiKey,
-//   vonageApiSecret,
-//   vonageApplicationId,
-//   vonagePrivateKey,
-//   vonageWhatsAppNumber,
-//   vonageUrl,
-// } = avayaConfig;
 
 import {
 	fetchAccessToken,
@@ -45,12 +25,23 @@ import {
 	sendVonageViberText,
 } from './helpers/index.js'
 
+const app = express()
+const port = process.env.PORT || 3000
+
 app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-const port = process.env.PORT || 3000
-app.listen(port, () => {
+const httpServer = createServer(app)
+const io = new Server(httpServer, {
+	cors: {
+		origin: '*',
+	},
+	pingTimeout: 60000,
+	pingInterval: 5000,
+})
+
+httpServer.listen(port, () => {
 	console.log(
 		'============================================================================================='
 	)
@@ -65,6 +56,93 @@ mongoose
 		() => console.log('connected to db'),
 		(err) => console.log('Error connecting db', err)
 	)
+
+const connectedSockets = []
+
+io.on('connection', (socket) => {
+	connectedSockets.push(socket.id)
+	console.log('connected sockets==> ', connectedSockets)
+
+	socket.on('disconnect', () => {
+		console.log('disconnected socket--> ', socket.id)
+		connectedSockets.splice(connectedSockets.indexOf(socket.id), 1)
+	})
+
+	socket.on('message', async (data) => {
+		// let payload = { ...data, socketId: socket.id }
+		// console.log('message from client--> ', payload)
+		// socket.emit('message', payload)
+		let {
+			sender,
+			text,
+			message_type,
+			image,
+			audio,
+			video,
+			file,
+			location,
+		} = data
+		let fileDetails = undefined
+		let locationDetails = undefined
+		if (
+			message_type === 'image' ||
+			message_type === 'audio' ||
+			message_type === 'video' ||
+			message_type === 'file'
+		) {
+			let resourceFile = image
+				? image
+				: audio
+					? audio
+					: video
+						? video
+						: file
+							? file
+							: undefined
+			resourceFile.message_type = message_type
+			fileDetails = await uploadFileToAvaya(resourceFile)
+		} else if (message_type === 'location') {
+			locationDetails = location
+		}
+		let channel = 'custom_chat_provider'
+		const from = socket.id
+		let tokenResp = await sendMessage(
+			sender,
+			text,
+			from,
+			channel,
+			message_type
+			// fileDetails,
+			// locationDetails
+		)
+		console.log('socket send message resp--> ', tokenResp)
+	})
+})
+
+app.get('/', async (req, res) => {
+	const indexPath = path.join(process.cwd(), 'index.html')
+	res.sendFile(indexPath)
+})
+
+app.get('/xyz', (req, res) => {
+	const userId = req.query.userId
+	const message = req.query.message
+
+	// Retrieve the socket ID for the specified user ID
+	const socketId = connectedSockets.find((id) => {
+		// Implement your logic to map user ID to socket ID if needed
+		// For simplicity, we're assuming the user ID is the same as the socket ID
+		return id === userId
+	})
+
+	if (socketId) {
+		// Emit a 'msg' event to the specific user's socket connection
+		io.to(socketId).emit('msg', message)
+		res.send(`Message "${message}" sent to user ID ${userId}`)
+	} else {
+		res.status(404).send(`User with ID ${userId} not found`)
+	}
+})
 
 app.get('/test', async (req, res) => {
 	res.send('api working')
@@ -184,6 +262,18 @@ app.post('/callback', async (req, res) => {
 							)
 							console.log('vonage resp--> ', vonageResp.data)
 						}
+					} else if (
+						reqBody.providerDialogId === 'custom_chat_provider'
+					) {
+						let proPartyId =
+							reqBody.recipientParticipants[0]
+								.providerParticipantId
+
+						let socketId = connectedSockets.find(
+							(id) => id === proPartyId
+						)
+
+						if (socketId) io.to(socketId).emit('message', reqBody)
 					} else {
 						let smsResp = await sendSMS(recipiant, replyMsg)
 						console.log('sms resp--> ', smsResp.data)
@@ -231,12 +321,58 @@ app.post('/callback', async (req, res) => {
 	}
 })
 
+// custom chat
 app.post('/send-message', async (req, res) => {
 	console.log('send message called')
 	try {
-		let { sender, message, mobileNo, channel } = req.body
-		console.log(sender, message, mobileNo)
-		let tokenResp = await sendMessage(sender, message, mobileNo, channel)
+		let {
+			sender,
+			text,
+			from,
+			message_type,
+			image,
+			audio,
+			video,
+			file,
+			location,
+		} = req.body
+		console.log('request body --> ', req.body)
+
+		// let fileDetails = undefined
+		// let locationDetails = undefined
+		// if (
+		// 	message_type === 'image' ||
+		// 	message_type === 'audio' ||
+		// 	message_type === 'video' ||
+		// 	message_type === 'file'
+		// ) {
+		// 	let resourceFile = image
+		// 		? image
+		// 		: audio
+		// 			? audio
+		// 			: video
+		// 				? video
+		// 				: file
+		// 					? file
+		// 					: undefined
+		// 	resourceFile.message_type = message_type
+		// 	fileDetails = await uploadFileToAvaya(resourceFile)
+		// } else if (message_type === 'location') {
+		// 	locationDetails = location
+		// }
+
+		let channel = 'custom_chat_provider'
+
+		let tokenResp = await sendMessage(
+			sender,
+			text,
+			from,
+			channel,
+			message_type
+			// fileDetails,
+			// locationDetails
+		)
+		console.log('resp--> ', tokenResp)
 		res.send(tokenResp)
 	} catch (error) {
 		console.log('Error in vonage-callback========> ', error.detail)
@@ -244,6 +380,7 @@ app.post('/send-message', async (req, res) => {
 	}
 })
 
+// vonage sms
 app.get('/vonage-callback', async (req, res) => {
 	console.log('GET vonage-callback')
 	console.log(req.query)
@@ -269,6 +406,7 @@ app.get('/vonage-callback', async (req, res) => {
 	}
 })
 
+// vonage whatsapp, viber
 app.post('/vonage-callback', async (req, res) => {
 	console.log('POST vonage-callback')
 	console.log(req.body)
@@ -347,6 +485,7 @@ app.post('/vonage-callback', async (req, res) => {
 	}
 })
 
+// vonage line
 app.post('/line-callback', async (req, res) => {
 	console.log('POST line-callback')
 	console.log(JSON.stringify(req.body))
