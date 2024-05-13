@@ -20,6 +20,7 @@ import {
 	sendVonageWhatsappImage,
 	sendVonageWhatsappImageApi,
 	uploadFileToAvaya,
+	uploadCustFileToAvaya,
 	uploadImage,
 	sendVonageWhatsappFile,
 	sendVonageWhatsappFileApi,
@@ -32,14 +33,15 @@ const app = express()
 const port = process.env.PORT || 3000
 
 app.use(cors())
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
+app.use(express.json({ limit: '100mb' }))
+app.use(express.urlencoded({ extended: true, limit: '100mb' }))
 
 const httpServer = createServer(app)
 const io = new Server(httpServer, {
 	cors: {
 		origin: '*',
 	},
+	maxHttpBufferSize: 1024 * 1024 * 1024,
 	pingTimeout: 60000,
 	pingInterval: 5000,
 })
@@ -70,6 +72,11 @@ io.on('connection', (socket) => {
 		console.log('disconnected socket--> ', socket.id)
 		connectedSockets.splice(connectedSockets.indexOf(socket.id), 1)
 	})
+
+	// socket.on('message', async (data) => {
+	// 	console.log('message from client', data)
+	// 	socket.emit('message', data)
+	// })
 
 	socket.on('message', async (data) => {
 		// let payload = { ...data, socketId: socket.id }
@@ -103,7 +110,7 @@ io.on('connection', (socket) => {
 							? file
 							: undefined
 			resourceFile.message_type = message_type
-			fileDetails = await uploadFileToAvaya(resourceFile)
+			fileDetails = await uploadCustFileToAvaya(resourceFile)
 		} else if (message_type === 'location') {
 			locationDetails = location
 		}
@@ -114,9 +121,9 @@ io.on('connection', (socket) => {
 			text,
 			from,
 			channel,
-			message_type
-			// fileDetails,
-			// locationDetails
+			message_type,
+			fileDetails,
+			locationDetails
 		)
 		console.log('socket send message resp--> ', tokenResp)
 	})

@@ -427,7 +427,7 @@ export async function uploadFileToAvaya(media) {
 		let fileName = media.name
 		let message_type = media.message_type
 		let { access_token } = await fetchAccessToken()
-		console.log('media---------------------------> ', media)
+		// console.log('media---------------------------> ', media)
 
 		let { fileType, fileSize, file, fileFullPathName } =
 			await getFileDetails(fileUrl, fileName)
@@ -567,10 +567,10 @@ export async function uploadImage(fileDetails) {
 			uploadSignedUri,
 			formData
 		)
-		console.log(
-			'fs.createReadStream(fileFullPathName)------------------------> ',
-			await fs.createReadStream(fileFullPathName)
-		)
+		// console.log(
+		// 	'fs.createReadStream(fileFullPathName)------------------------> ',
+		// 	await fs.createReadStream(fileFullPathName)
+		// )
 
 		const uploadResponse = await axios.post(uploadSignedUri, formData, {
 			headers: {
@@ -674,3 +674,114 @@ export async function sendVonageViberText(to, text) {
 		throw error
 	}
 }
+
+export async function uploadCustFileToAvaya(media) {
+	// console.log('media--> ', media)
+	try {
+		let fileName = media.name
+		let fileData = media.data
+		let message_type = media.message_type
+		let { access_token } = await fetchAccessToken()
+		// console.log('media---------------------------> ', media)
+		let { fileType, fileSize, file, fileFullPathName } =
+			await getCustFileDetails(fileData, fileName)
+		console.log(
+			'===========asdf==========> ',
+			fileName,
+			fileType,
+			fileSize,
+			fileFullPathName
+		)
+		const options = {
+			method: 'POST',
+			url: avayaFileUploadUrl,
+			headers: {
+				accept: 'application/json',
+				authorization: `Bearer ${access_token}`,
+				'content-type': 'application/json',
+			},
+			data: {
+				mediaName: fileName,
+				mediaContentType: fileType,
+				// mediaContentType:
+				// 	message_type === 'audio'
+				// 		? `audio/opus`
+				// 		: message_type === 'video'
+				// 			? `video/mp4`
+				// 			: fileType,
+				mediaSize: fileSize,
+			},
+		}
+		console.log('============== generate file url payload==> ', options)
+		let resp = await axios.request(options)
+		let uploadFilePayload = {
+			fileFullPathName,
+			mediaName: resp.data.mediaName,
+			mediaContentType: resp.data.mediaContentType,
+			mediaSize: resp.data.mediaSize,
+			mediaId: resp.data.mediaId,
+			uploadSignedUri: resp.data.uploadSignedUri,
+		}
+		let uploadImgResp = await uploadImage(uploadFilePayload)
+		console.log('=================> ', uploadImgResp)
+		return uploadImgResp
+		// return resp.data;
+	} catch (error) {
+		console.log('Error in uploadFileToAvaya=>  ', error)
+		if (error.response.data) {
+			throw error.response.data
+		} else {
+			throw error.message
+		}
+	}
+}
+
+export async function getCustFileDetails(fileData, fileName) {
+	try {
+		// const response = fileData
+		const contentType = fileData.split(':')[1]?.split(';')[0]
+		console.log('content type== > ', contentType)
+
+		const __dirname = path.dirname(fileURLToPath(import.meta.url))
+		const directory = path.join(__dirname, 'img')
+		const filePath = path.join(directory, fileName)
+
+		let { fileSize, file, fileFullPathName } = await processCustFile(
+			fileData,
+			filePath
+		)
+
+		return {
+			fileType: contentType,
+			fileSize,
+			file,
+			fileFullPathName,
+		}
+	} catch (error) {
+		console.error('Error fetching file details:', error.message)
+		return null
+	}
+}
+
+function processCustFile(file, filename) {
+	return new Promise((resolve, reject) => {
+		const fileStream = fs.createWriteStream(filename)
+		let fileSize = 0
+		let chunks = []
+		fs.writeFile(filename, file, (err) => {
+			if (err) {
+				console.error('err saving file: -> ', err)
+				reject(err)
+			} else {
+				// file written successfully
+				resolve({
+					fileSize: fs.statSync(filename).size,
+					file: fs.readFileSync(filename),
+					fileFullPathName: filename,
+				})
+			}
+		})
+	})
+}
+
+// export async function sendCustomProviderMessage
