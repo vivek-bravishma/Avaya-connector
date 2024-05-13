@@ -292,6 +292,33 @@ export async function sendVonageWhatsappText(to, text) {
 	}
 }
 
+export async function sendVonageWhatsappTextApi(to, text) {
+	try {
+		const payload = {
+			from: '14157386102',
+			to,
+			message_type: 'text',
+			text,
+			channel: 'whatsapp',
+		}
+		const config = {
+			headers: {
+				'Content-Type': 'application/json',
+				Accept: 'application/json',
+			},
+			auth: {
+				username: vonageApiKey,
+				password: vonageApiSecret,
+			},
+		}
+		let resp = await axios.post(vonageUrl, payload, config)
+		return resp
+	} catch (error) {
+		console.log('send vonage whatsapp text error--> ', error)
+		throw error
+	}
+}
+
 export async function sendVonageWhatsappImage(to, image) {
 	try {
 		console.log('==>sendVonageWhatsappImage')
@@ -312,6 +339,37 @@ export async function sendVonageWhatsappImage(to, image) {
 	}
 }
 
+export async function sendVonageWhatsappImageApi(to, image) {
+	try {
+		console.log('==>sendVonageWhatsappImage')
+		const payload = {
+			from: '14157386102',
+			to,
+			message_type: 'image',
+			image: {
+				url: image,
+			},
+			channel: 'whatsapp',
+		}
+		const config = {
+			headers: {
+				'Content-Type': 'application/json',
+				Accept: 'application/json',
+			},
+			auth: {
+				username: vonageApiKey,
+				password: vonageApiSecret,
+			},
+		}
+		let resp = await axios.post(vonageUrl, payload, config)
+		console.log('==>sendVonageWhatsappImage Response ', resp)
+		return resp
+	} catch (error) {
+		console.log('send vonage whatsapp image error--> ', error)
+		throw error
+	}
+}
+
 export async function sendVonageWhatsappFile(to, fileUrl) {
 	try {
 		console.log('--- sendVonageWhatsapp FIle ---')
@@ -324,6 +382,37 @@ export async function sendVonageWhatsappFile(to, fileUrl) {
 				},
 			})
 		)
+		console.log('--- sendVonageWhatsapp file response --- ', resp)
+		return resp
+	} catch (error) {
+		console.log('send vonage whatsapp file error--> ', error)
+		throw error
+	}
+}
+
+export async function sendVonageWhatsappFileApi(to, fileUrl) {
+	try {
+		console.log('--- sendVonageWhatsapp FIle ---')
+		const payload = {
+			from: '14157386102',
+			to,
+			message_type: 'file',
+			file: {
+				url: fileUrl,
+			},
+			channel: 'whatsapp',
+		}
+		const config = {
+			headers: {
+				'Content-Type': 'application/json',
+				Accept: 'application/json',
+			},
+			auth: {
+				username: vonageApiKey,
+				password: vonageApiSecret,
+			},
+		}
+		let resp = await axios.post(vonageUrl, payload, config)
 		console.log('--- sendVonageWhatsapp file response --- ', resp)
 		return resp
 	} catch (error) {

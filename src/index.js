@@ -16,10 +16,13 @@ import {
 	sendSMS,
 	sendVonageMsg,
 	sendVonageWhatsappText,
+	sendVonageWhatsappTextApi,
 	sendVonageWhatsappImage,
+	sendVonageWhatsappImageApi,
 	uploadFileToAvaya,
 	uploadImage,
 	sendVonageWhatsappFile,
+	sendVonageWhatsappFileApi,
 	sendLineTextMessage,
 	sendLineImageMessage,
 	sendVonageViberText,
@@ -121,6 +124,11 @@ io.on('connection', (socket) => {
 
 app.get('/', async (req, res) => {
 	const indexPath = path.join(process.cwd(), 'index.html')
+	console.log('env==> ', process.env.VONAGE_API_KEY)
+	console.log('env==> ', process.env.VONAGE_API_SECRET)
+	console.log('env==> ', process.env.VONAGE_APPLICATION_ID)
+	console.log('env==> ', process.env.VONAGE_PRIVATE_KEY)
+
 	res.sendFile(indexPath)
 })
 
@@ -145,7 +153,12 @@ app.get('/xyz', (req, res) => {
 })
 
 app.get('/test', async (req, res) => {
-	res.send('api working')
+	try {
+		let fu = await sendVonageWhatsappText('919558241999', 'test message')
+		res.send({ fu })
+	} catch (error) {
+		res.send(error)
+	}
 })
 
 app.get('/customer-details', async (req, res) => {
@@ -192,7 +205,11 @@ app.post('/callback', async (req, res) => {
 						console.log('\n\n\nWhatsapp message type : ', type)
 						if (type === 'image') {
 							let imageUrl = reqBody.attachments[0].url
-							let vonageResp = await sendVonageWhatsappImage(
+							// let vonageResp = await sendVonageWhatsappImage(
+							// 	recipiant,
+							// 	imageUrl
+							// )
+							let vonageResp = await sendVonageWhatsappImageApi(
 								recipiant,
 								imageUrl
 							)
@@ -202,16 +219,25 @@ app.post('/callback', async (req, res) => {
 							)
 						} else if (type === 'file') {
 							let fileUrl = reqBody.attachments[0].url
-							let vonageResp = await sendVonageWhatsappFile(
+							// let vonageResp = await sendVonageWhatsappFile(
+							// 	recipiant,
+							// 	fileUrl
+							// )
+							let vonageResp = await sendVonageWhatsappFileApi(
 								recipiant,
 								fileUrl
 							)
 							console.log('vonage file resp--> ', vonageResp.data)
 						} else {
-							let vonageResp = await sendVonageWhatsappText(
+							// let vonageResp = await sendVonageWhatsappText(
+							// 	recipiant,
+							// 	replyMsg
+							// )
+							let vonageResp = await sendVonageWhatsappTextApi(
 								recipiant,
 								replyMsg
 							)
+
 							console.log('vonage resp--> ', vonageResp.data)
 						}
 					} else if (reqBody.providerDialogId === 'Line') {

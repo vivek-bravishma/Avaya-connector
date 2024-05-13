@@ -28,9 +28,8 @@ config = {
 	VIBER_SERVICE_MESSAGE_ID: '22353',
 	lineMessageUrl: ' https://api.line.me/v2/bot/message/push',
 	lineToken:
-		'7vm3N0qNPBv2aSC+2aYvz/++w53S57kFVIC/72IQeIR4AxfX/kmO+3Sm4JSMNL893waGJcfsCrGzwt6jkw9OAo4oorjfxzLFcMO/mHmMIuufiCXQifHokpwDvgcuTUq8JCx/4KqsBYKPsKuk+UZtzwdB04t89/1O/w1cDnyilFU=',
+		'rq19tBuwHiVU+icYou47lMaob8U1zM/sUCSZkYzwGRselsT4zpyMX6kmqZwcsbROKs38LvcgwFmLdUATef+X8C2AZb3wkKSeLqHwaBQHbssXQ2MeMWVpchNRLzrcGFxF+V4tXJjfvD7dmwuyHfhMwAdB04t89/1O/w1cDnyilFU=',
 }
-
 // export default {
 
 //   avayaBaseUrl: "https://experience.api.avayacloud.com",
