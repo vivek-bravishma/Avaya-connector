@@ -785,4 +785,47 @@ function processCustFile(file, filename) {
 	})
 }
 
-// export async function sendCustomProviderMessage
+export async function sendCustomProviderMessage(io, socketId, reqBody) {
+	let message_type = reqBody.body.elementType
+	console.log('cust msg pro message type--> ', message_type)
+	const sender =
+		reqBody.senderParticipantType === 'SYSTEM'
+			? 'SYSTEM'
+			: reqBody.senderParticipantName
+	const payload = {
+		sender,
+		userType: reqBody.senderParticipantType,
+		message_type,
+		// text?: 'message text',
+		// image?: {
+		// 	name: '',
+		// 	data: '',
+		// },
+		// audio?: {
+		// 	name: '',
+		// 	data: '',
+		// },
+		// video?: {
+		// 	name: '',
+		// 	data: '',
+		// },
+		// file?: {
+		// 	name: '',
+		// 	data: '',
+		// },
+		// location?: {
+		// 	lat: 'number',
+		// 	long: 'number',
+		// },
+	}
+	if (message_type === 'text') {
+		//text , location req, emo
+		payload.text = reqBody.body.elementText.text
+	} else if (message_type === 'image') {
+	} else if (message_type === 'file') {
+		//audio and video
+	}
+	console.log('cust msg pro payload==> ', payload)
+
+	io.to(socketId).emit('message', payload)
+}

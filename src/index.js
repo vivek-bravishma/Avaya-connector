@@ -27,6 +27,7 @@ import {
 	sendLineTextMessage,
 	sendLineImageMessage,
 	sendVonageViberText,
+	sendCustomProviderMessage,
 } from './helpers/index.js'
 
 const app = express()
@@ -306,7 +307,10 @@ app.post('/callback', async (req, res) => {
 							(id) => id === proPartyId
 						)
 
-						if (socketId) io.to(socketId).emit('message', reqBody)
+						// if (socketId) io.to(socketId).emit('message', reqBody)
+						if (socketId) {
+							sendCustomProviderMessage(io, socketId, reqBody)
+						}
 					} else {
 						let smsResp = await sendSMS(recipiant, replyMsg)
 						console.log('sms resp--> ', smsResp.data)
