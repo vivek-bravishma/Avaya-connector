@@ -233,11 +233,12 @@ export async function sendSMS(recipiant, replyMsg) {
 			api_key: vonageApiKey,
 			api_secret: vonageApiSecret,
 		}
+		console.log('sms_payload= ', payload)
 		let vonageUrl = 'https://rest.nexmo.com/sms/json'
 
-		let vonageResponse = await axios.post(vonageUrl, vonagePayload)
+		let vonageResponse = await axios.post(vonageUrl, payload)
 		// let resp = await axios.post(vonageSMSUrl, payload)
-		return resp
+		return vonageResponse
 	} catch (error) {
 		console.log('send sms error--', error)
 		throw error
