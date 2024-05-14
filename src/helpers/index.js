@@ -800,18 +800,22 @@ export async function sendCustomProviderMessage(io, socketId, reqBody) {
 		// image?: {
 		// 	name: '',
 		// 	data: '',
+		//	url:''
 		// },
 		// audio?: {
 		// 	name: '',
 		// 	data: '',
+		//	url:''
 		// },
 		// video?: {
 		// 	name: '',
 		// 	data: '',
+		//	url:''
 		// },
 		// file?: {
 		// 	name: '',
 		// 	data: '',
+		//	url:''
 		// },
 		// location?: {
 		// 	lat: 'number',
@@ -819,11 +823,50 @@ export async function sendCustomProviderMessage(io, socketId, reqBody) {
 		// },
 	}
 	if (message_type === 'text') {
-		//text , location req, emo
+		// text/emo(same) and location req
 		payload.text = reqBody.body.elementText.text
+		let actions = reqBody.body.richMediaPayload?.actions
+		if (actions && actions.length > 0) {
+			payload.actions = actions
+		}
 	} else if (message_type === 'image') {
+		payload.image = {
+			data: '',
+			name: reqBody.attachments[0].name,
+			size: reqBody.attachments[0].size,
+			contentType: reqBody.attachments[0].contentType,
+			url: reqBody.attachments[0].url,
+		}
 	} else if (message_type === 'file') {
-		//audio and video
+		//audio, video and file
+		const fileType = reqBody.attachments[0]?.contentType?.split('/')[0]
+		if (fileType === 'audio') {
+			payload.message_type = 'audio'
+			payload.audio = {
+				data: '',
+				name: reqBody.attachments[0].name,
+				size: reqBody.attachments[0].size,
+				contentType: reqBody.attachments[0].contentType,
+				url: reqBody.attachments[0].url,
+			}
+		} else if (fileType === 'video') {
+			payload.message_type = 'video'
+			payload.video = {
+				data: '',
+				name: reqBody.attachments[0].name,
+				size: reqBody.attachments[0].size,
+				contentType: reqBody.attachments[0].contentType,
+				url: reqBody.attachments[0].url,
+			}
+		} else {
+			payload.file = {
+				data: '',
+				name: reqBody.attachments[0].name,
+				size: reqBody.attachments[0].size,
+				contentType: reqBody.attachments[0].contentType,
+				url: reqBody.attachments[0].url,
+			}
+		}
 	}
 	console.log('cust msg pro payload==> ', payload)
 
