@@ -589,9 +589,10 @@ app.post('/viber-callback', async (req, res) => {
 app.post('/caller-id-callback', async (req, res) => {
 	console.log(JSON.stringify(req.body))
 	let callerID = req.body?.payload?.telephony?.caller_id
+	let callerIDDdd = callerID.trim().split('+')[1]
 	const sessionId = req.body?.sessionInfo?.session
 	const sessionParameters = {
-		caller_ids: callerID,
+		caller_ids: callerIDDdd,
 	}
 
 	// Return a response with fulfillment text and any other necessary information
