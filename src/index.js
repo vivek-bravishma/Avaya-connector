@@ -585,3 +585,31 @@ app.post('/viber-callback', async (req, res) => {
 	console.log(JSON.stringify(req.body))
 	res.send('OK')
 })
+
+app.post('/caller-id-callback', async (req, res) => {
+	console.log(JSON.stringify(req.body))
+	let callerID = req.body?.payload?.telephony?.caller_id
+	const sessionId = req.body?.sessionInfo?.session
+	const sessionParameters = {
+		caller_ids: callerID,
+	}
+
+	// Return a response with fulfillment text and any other necessary information
+	const response = {
+		fulfillmentResponse: {
+			messages: [
+				{
+					text: {
+						text: [''],
+					},
+				},
+			],
+		},
+		sessionInfo: {
+			session: sessionId,
+			parameters: sessionParameters,
+		},
+	}
+	console.log(response)
+	res.json(response)
+})
