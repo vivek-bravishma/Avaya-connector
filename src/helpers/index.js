@@ -563,11 +563,11 @@ export async function uploadImage(fileDetails) {
 		formData.append('mediaId', mediaId)
 		formData.append('mediaFile', fs.createReadStream(fileFullPathName))
 
-		console.log(
-			'========== upload file payload ================',
-			uploadSignedUri,
-			formData
-		)
+		// console.log(
+		// 	'========== upload file payload ================',
+		// 	uploadSignedUri,
+		// 	formData
+		// )
 		// console.log(
 		// 	'fs.createReadStream(fileFullPathName)------------------------> ',
 		// 	await fs.createReadStream(fileFullPathName)
@@ -683,7 +683,6 @@ export async function uploadCustFileToAvaya(media) {
 		let fileData = media.data
 		let message_type = media.message_type
 		let { access_token } = await fetchAccessToken()
-		// console.log('media---------------------------> ', media)
 		let { fileType, fileSize, file, fileFullPathName } =
 			await getCustFileDetails(fileData, fileName)
 		console.log(
@@ -726,7 +725,6 @@ export async function uploadCustFileToAvaya(media) {
 		let uploadImgResp = await uploadImage(uploadFilePayload)
 		console.log('=================> ', uploadImgResp)
 		return uploadImgResp
-		// return resp.data;
 	} catch (error) {
 		console.log('Error in uploadFileToAvaya=>  ', error)
 		if (error.response.data) {
@@ -739,16 +737,17 @@ export async function uploadCustFileToAvaya(media) {
 
 export async function getCustFileDetails(fileData, fileName) {
 	try {
-		// const response = fileData
 		const contentType = fileData.split(':')[1]?.split(';')[0]
 		console.log('content type== > ', contentType)
 
 		const __dirname = path.dirname(fileURLToPath(import.meta.url))
 		const directory = path.join(__dirname, 'img')
 		const filePath = path.join(directory, fileName)
+		const base64Data = fileData.replace(/^data:\w+\/\w+;base64,/, '')
+		const fileBinaryData = Buffer.from(base64Data, 'base64')
 
 		let { fileSize, file, fileFullPathName } = await processCustFile(
-			fileData,
+			fileBinaryData,
 			filePath
 		)
 
@@ -766,15 +765,12 @@ export async function getCustFileDetails(fileData, fileName) {
 
 function processCustFile(file, filename) {
 	return new Promise((resolve, reject) => {
-		const fileStream = fs.createWriteStream(filename)
-		let fileSize = 0
-		let chunks = []
 		fs.writeFile(filename, file, (err) => {
 			if (err) {
 				console.error('err saving file: -> ', err)
 				reject(err)
 			} else {
-				// file written successfully
+				console.log('file stat==> ', fs.statSync(filename))
 				resolve({
 					fileSize: fs.statSync(filename).size,
 					file: fs.readFileSync(filename),

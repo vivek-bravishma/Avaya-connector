@@ -80,9 +80,7 @@ io.on('connection', (socket) => {
 	// })
 
 	socket.on('message', async (data) => {
-		// let payload = { ...data, socketId: socket.id }
-		// console.log('message from client--> ', payload)
-		// socket.emit('message', payload)
+		console.log('data----> ', data)
 		let {
 			sender,
 			text,
