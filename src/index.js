@@ -321,6 +321,8 @@ app.post('/callback', async (req, res) => {
 				}
 			} else if (reqBody.senderParticipantType === 'CUSTOMER') {
 				console.log('customer msg --> ', reqBody.body.elementText.text)
+				let channel =
+					reqBody?.headers?.sourceType?.split('custom-messaging:')[1]
 
 				let resipntPartyCustProPartyId =
 					reqBody.recipientParticipants?.filter(
@@ -341,7 +343,7 @@ app.post('/callback', async (req, res) => {
 
 					const customerData = {
 						customerName: reqBody?.senderParticipantName,
-						channel: reqBody?.providerDialogId,
+						channel: channel,
 						engagementId: reqBody?.engagementId,
 						providerParticipantId: resipntPartyCustProPartyId,
 						correlationId: reqBody?.correlationId,
