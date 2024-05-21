@@ -194,6 +194,7 @@ export async function sendMessage(
 				senderName: sender,
 				businessAccountName: integrationId,
 				// providerDialogId: channel,
+				providerDialogId: mobileNo,
 				customData: { msngChannel: channel },
 				headers: {
 					sourceType: channel,
