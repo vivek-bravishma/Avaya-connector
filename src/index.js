@@ -193,20 +193,25 @@ app.post('/callback', async (req, res) => {
 				let replyMsg = reqBody.body.elementText.text
 				let recipiant =
 					reqBody.recipientParticipants[0].providerParticipantId
+
+				let channel =
+					reqBody?.headers?.sourceType?.split('custom-messaging:')[1]
 				console.log(
 					'Recipient=> ',
 					recipiant,
 					'  replyMsg=> ',
 					replyMsg,
 					'   providerDialogId=> ',
-					reqBody.providerDialogId
+					reqBody.providerDialogId,
+					'  channel ==> ',
+					channel
 				)
 				console.log(
 					'============================================= ',
 					reqBody
 				)
 				if (recipiant) {
-					if (reqBody.providerDialogId === 'whatsapp') {
+					if (channel === 'whatsapp') {
 						let type = reqBody.body.elementType
 						console.log('\n\n\nWhatsapp message type : ', type)
 						if (type === 'image') {
@@ -246,7 +251,7 @@ app.post('/callback', async (req, res) => {
 
 							console.log('vonage resp--> ', vonageResp.data)
 						}
-					} else if (reqBody.providerDialogId === 'Line') {
+					} else if (channel === 'Line') {
 						console.log('Handle Line messages here')
 						let type = reqBody.body.elementType
 						console.log('\n\nLine message type : ', type)
@@ -256,7 +261,7 @@ app.post('/callback', async (req, res) => {
 								recipiant,
 								replyMsg,
 								type,
-								reqBody.providerDialogId
+								channel
 							)
 						} else if (type === 'image') {
 							let imageUrl = reqBody.attachments[0].url
@@ -264,10 +269,10 @@ app.post('/callback', async (req, res) => {
 								recipiant,
 								imageUrl,
 								type,
-								reqBody.providerDialogId
+								channel
 							)
 						}
-					} else if (reqBody.providerDialogId === 'viber_service') {
+					} else if (channel === 'viber_service') {
 						let type = reqBody.body.elementType
 						console.log('\n\n\n viber message type : ', type)
 						if (type === 'image') {
@@ -294,9 +299,7 @@ app.post('/callback', async (req, res) => {
 							)
 							console.log('vonage resp--> ', vonageResp.data)
 						}
-					} else if (
-						reqBody.providerDialogId === 'custom_chat_provider'
-					) {
+					} else if (channel === 'custom_chat_provider') {
 						let proPartyId =
 							reqBody.recipientParticipants[0]
 								.providerParticipantId
@@ -309,9 +312,11 @@ app.post('/callback', async (req, res) => {
 						if (socketId) {
 							sendCustomProviderMessage(io, socketId, reqBody)
 						}
-					} else {
+					} else if (channel === 'sms') {
 						let smsResp = await sendSMS(recipiant, replyMsg)
 						console.log('sms resp--> ', smsResp.data)
+					} else {
+						console.log('invalid channel ---> ', channel)
 					}
 				}
 			} else if (reqBody.senderParticipantType === 'CUSTOMER') {

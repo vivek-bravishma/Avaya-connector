@@ -187,20 +187,17 @@ export async function sendMessage(
 				customerIdentifiers: {
 					mobile: [mobileNo],
 				},
-				customData: { msngChannel: channel },
 				body: body,
 				attachments,
 				channelProviderId,
 				channelId: 'Messaging',
 				senderName: sender,
 				businessAccountName: integrationId,
-				providerDialogId: channel,
-				// headers: {
-				// 	additionalHeaders: {
-				// 		newKey: 'New Value',
-				// 	},
-				// 	sourceType: 'facebook',
-				// },
+				// providerDialogId: channel,
+				customData: { msngChannel: channel },
+				headers: {
+					sourceType: channel,
+				},
 			},
 		}
 
