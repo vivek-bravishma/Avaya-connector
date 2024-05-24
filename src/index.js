@@ -64,14 +64,29 @@ mongoose
 	)
 
 const connectedSockets = []
+const connectedSocketsMap = new Map()
 
 io.on('connection', (socket) => {
 	connectedSockets.push(socket.id)
 	console.log('connected sockets==> ', connectedSockets)
 
+	connectedSocketsMap.set(socket.id, {})
+	connectedSocketsMap.forEach((value, key) =>
+		console.log('connection - connectedSocketsMap==> ', key, ' = ', value)
+	)
+
 	socket.on('disconnect', () => {
 		console.log('disconnected socket--> ', socket.id)
 		connectedSockets.splice(connectedSockets.indexOf(socket.id), 1)
+		connectedSocketsMap.delete(socket.id)
+		connectedSocketsMap.forEach((value, key) =>
+			console.log(
+				'disconnect - connectedSocketsMap==> ',
+				key,
+				' = ',
+				value
+			)
+		)
 	})
 
 	// socket.on('message', async (data) => {
@@ -81,7 +96,10 @@ io.on('connection', (socket) => {
 
 	socket.on('message', async (data) => {
 		console.log('data----> ', data)
+
+		// return 'fu'
 		let {
+			copilot_convo_id,
 			sender,
 			text,
 			message_type,
@@ -91,6 +109,17 @@ io.on('connection', (socket) => {
 			file,
 			location,
 		} = data
+
+		// copilot_convo_id = 'fdasfsdafsda'
+
+		connectedSocketsMap.set(socket.id, {
+			copilotId: copilot_convo_id,
+		})
+
+		connectedSocketsMap.forEach((value, key) =>
+			console.log('message - connectedSocketsMap==> ', key, ' = ', value)
+		)
+
 		let fileDetails = undefined
 		let locationDetails = undefined
 		if (
@@ -115,6 +144,8 @@ io.on('connection', (socket) => {
 		}
 		let channel = 'custom_chat_provider'
 		const from = socket.id
+		// const from = copilot_convo_id ? copilot_convo_id : socket.id
+
 		let tokenResp = await sendMessage(
 			sender,
 			text,
@@ -304,9 +335,19 @@ app.post('/callback', async (req, res) => {
 							reqBody.recipientParticipants[0]
 								.providerParticipantId
 
+						console.log('proPartyId------> ', proPartyId)
+						console.log('sockets------> ', connectedSockets)
+
 						let socketId = connectedSockets.find(
 							(id) => id === proPartyId
 						)
+
+						let socketId2 = connectedSocketsMap.has(proPartyId)
+							? proPartyId
+							: null
+						let copilotId = connectedSocketsMap.get(proPartyId)
+						console.log('socketId2------> ', socketId2)
+						console.log('copilotId------> ', copilotId)
 
 						// if (socketId) io.to(socketId).emit('message', reqBody)
 						if (socketId) {

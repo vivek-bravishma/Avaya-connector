@@ -205,7 +205,7 @@ export async function sendMessage(
 		// console.log('options=============> ', JSON.stringify(options))
 
 		let resp = await axios.request(options)
-		console.log('send message response data==> ', resp.data)
+		// console.log('send message response data==> ', resp.data)
 		return resp.data
 	} catch (error) {
 		if (error.response.data) {
@@ -866,3 +866,5 @@ export async function sendCustomProviderMessage(io, socketId, reqBody) {
 
 	io.to(socketId).emit('message', payload)
 }
+
+export async function getAllCopilotMessages() {}
