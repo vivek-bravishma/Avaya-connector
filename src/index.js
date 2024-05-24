@@ -28,7 +28,12 @@ import {
 	sendLineImageMessage,
 	sendVonageViberText,
 	sendCustomProviderMessage,
+	getAllCopilotMessages,
 } from './helpers/index.js'
+
+import avayaConfig from './config/avaya.js'
+
+const { copilotToken } = avayaConfig
 
 const app = express()
 const port = process.env.PORT || 3000
@@ -190,7 +195,10 @@ app.get('/xyz', (req, res) => {
 
 app.get('/test', async (req, res) => {
 	try {
-		let fu = await sendVonageWhatsappText('919558241999', 'test message')
+		// let fu = await sendVonageWhatsappText('919558241999', 'test message')
+
+		let fu = await getAllCopilotMessages(req.query.copilotConvoId)
+		console.log('fu=> ', fu)
 		res.send({ fu })
 	} catch (error) {
 		res.send(error)
@@ -663,4 +671,20 @@ app.post('/caller-id-callback', async (req, res) => {
 	}
 	console.log(response)
 	res.json(response)
+})
+
+app.get('/copilot-token', (req, res) => {
+	res.send(copilotToken)
+})
+
+app.get('/copilot-messages', async (req, res) => {
+	try {
+		let copilotMessages = await getAllCopilotMessages(
+			req.query.copilotConvoId
+		)
+		console.log('copilotMessages=> ', copilotMessages)
+		res.send(copilotMessages)
+	} catch (error) {
+		res.send(error)
+	}
 })

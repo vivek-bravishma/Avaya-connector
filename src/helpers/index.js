@@ -27,6 +27,7 @@ const {
 	integrationId,
 	integrationName,
 	grant_type,
+	copilotToken,
 	accessTokenUrl,
 	createSubscriptionUrl,
 	sendMsgUrl,
@@ -867,4 +868,24 @@ export async function sendCustomProviderMessage(io, socketId, reqBody) {
 	io.to(socketId).emit('message', payload)
 }
 
-export async function getAllCopilotMessages() {}
+export async function getAllCopilotMessages(copilotId) {
+	try {
+		console.log('copilotId==> ', copilotId)
+		console.log('copilotToken==> ', copilotToken)
+
+		var options = {
+			method: 'GET',
+			url: `https://directline.botframework.com/v3/directline/conversations/${copilotId}/activities`,
+			headers: {
+				Accept: '*/*',
+				Authorization: `Bearer ${copilotToken}`,
+			},
+		}
+
+		let resp = await axios.request(options)
+		return resp.data
+	} catch (error) {
+		console.error('getAllCopilotMessages error=> ', error)
+		return error
+	}
+}
