@@ -674,7 +674,7 @@ app.post('/caller-id-callback', async (req, res) => {
 })
 
 app.get('/copilot-token', (req, res) => {
-	res.send(copilotToken)
+	res.send({ copilotToken })
 })
 
 app.get('/copilot-messages', async (req, res) => {
