@@ -688,6 +688,26 @@ app.get('/copilot-token', (req, res) => {
 
 app.get('/copilot-messages', async (req, res) => {
 	try {
+		let socketId = req.query.socketId
+		let copilotConvoId = connectedSocketsMap.get(socketId)?.copilotId
+
+		console.log('socketId==> ', socketId)
+		console.log('copilotConvoId==> ', copilotConvoId)
+
+		if (!copilotConvoId) {
+			res.send('invalid customer id')
+		} else {
+			let copilotMessages = await getAllCopilotMessages(copilotConvoId)
+			console.log('copilotMessages=> ', copilotMessages)
+			res.send(copilotMessages)
+		}
+	} catch (error) {
+		res.send(error)
+	}
+})
+
+app.get('/copilot-messages-cpcid', async (req, res) => {
+	try {
 		let copilotMessages = await getAllCopilotMessages(
 			req.query.copilotConvoId
 		)
