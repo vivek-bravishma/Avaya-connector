@@ -41,6 +41,7 @@ const {
 	vonageWhatsAppNumber,
 	vonageUrl,
 	vonage_BASE_URL,
+	lineBaseUrl,
 	lineMessageUrl,
 	lineToken,
 	VIBER_SERVICE_MESSAGE_ID,
@@ -886,6 +887,25 @@ export async function getAllCopilotMessages(copilotId) {
 		return resp.data
 	} catch (error) {
 		console.error('getAllCopilotMessages error=> ', error)
+		return error
+	}
+}
+
+export async function getLineUserDetails(userId) {
+	try {
+		var options = {
+			method: 'GET',
+			url: `${lineBaseUrl}/profile/${userId}`,
+			headers: {
+				Accept: '*/*',
+				Authorization: `Bearer ${lineToken}`,
+			},
+		}
+
+		let resp = await axios.request(options)
+		return resp.data
+	} catch (error) {
+		console.error('getLineUserDetails error=> ', error)
 		return error
 	}
 }

@@ -29,6 +29,7 @@ import {
 	sendVonageViberText,
 	sendCustomProviderMessage,
 	getAllCopilotMessages,
+	getLineUserDetails,
 } from './helpers/index.js'
 
 import avayaConfig from './config/avaya.js'
@@ -593,10 +594,18 @@ app.post('/line-callback', async (req, res) => {
 			let messageEvent = events[0]
 			let messageType = messageEvent.message.type
 			console.log('MessageType : ' + messageType)
+			let lineUserId = messageEvent.source.userId
+			let lineUserDetails = await getLineUserDetails(lineUserId)
+			console.log('lineUserDetails=', lineUserDetails)
+			let lineUsername = lineUserDetails?.displayName
+				? lineUserDetails.displayName
+				: 'Line User'
+
+			console.log('lineUsername=', lineUsername)
 
 			if (messageType === 'text') {
 				let tokenResp = await sendMessage(
-					messageEvent.source.type,
+					lineUsername,
 					messageEvent.message.text,
 					messageEvent.source.userId,
 					'Line',
@@ -613,7 +622,7 @@ app.post('/line-callback', async (req, res) => {
 					long: messageEvent.message.longitude,
 				}
 				let tokenResp = await sendMessage(
-					messageEvent.source.type,
+					lineUsername,
 					messageEvent.message.address,
 					messageEvent.source.userId,
 					'Line',
