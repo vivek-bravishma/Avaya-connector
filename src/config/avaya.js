@@ -7,7 +7,8 @@ let config = {
 	integrationName: 'SECUSTOM',
 	grant_type: 'client_credentials',
 	avayaBaseUrl: 'https://experience.api.avayacloud.com',
-	copilotToken: '6mJ1ECPC0dk.hunFtodVEt72En-mSOwQiSLcBabsgjK_zwLVeAYq6U8',
+	// copilotToken: '6mJ1ECPC0dk.hunFtodVEt72En-mSOwQiSLcBabsgjK_zwLVeAYq6U8',//copy chatbot
+	copilotToken: 'mcKUYtZZ-5A.SNSxaE9Tb2FcLEtXhLAq-ISgM4LAwiH-dzaAvCAuTZA', //univ cop
 }
 
 config = {
@@ -27,7 +28,7 @@ config = {
 	vonage_BASE_URL: 'https://messages-sandbox.nexmo.com',
 	// VIBER_SERVICE_MESSAGE_ID: "16273",
 	VIBER_SERVICE_MESSAGE_ID: '22353',
-	lineBaseUrl:"https://api.line.me/v2/bot",
+	lineBaseUrl: 'https://api.line.me/v2/bot',
 	lineMessageUrl: ' https://api.line.me/v2/bot/message/push',
 	lineToken:
 		'rq19tBuwHiVU+icYou47lMaob8U1zM/sUCSZkYzwGRselsT4zpyMX6kmqZwcsbROKs38LvcgwFmLdUATef+X8C2AZb3wkKSeLqHwaBQHbssXQ2MeMWVpchNRLzrcGFxF+V4tXJjfvD7dmwuyHfhMwAdB04t89/1O/w1cDnyilFU=',
