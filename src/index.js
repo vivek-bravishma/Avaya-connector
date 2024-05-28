@@ -84,15 +84,16 @@ io.on('connection', (socket) => {
 	socket.on('disconnect', () => {
 		console.log('disconnected socket--> ', socket.id)
 		// connectedSockets.splice(connectedSockets.indexOf(socket.id), 1)
+		console.log('socket disconnected with id=> ', socket.id)
 		connectedSocketsMap.delete(socket.id)
-		connectedSocketsMap.forEach((value, key) =>
-			console.log(
-				'disconnect - connectedSocketsMap==> ',
-				key,
-				' = ',
-				value
-			)
-		)
+		// connectedSocketsMap.forEach((value, key) =>
+		// 	console.log(
+		// 		'disconnect - connectedSocketsMap==> ',
+		// 		key,
+		// 		' = ',
+		// 		value
+		// 	)
+		// )
 	})
 
 	// socket.on('message', async (data) => {
@@ -693,6 +694,15 @@ app.get('/copilot-messages', async (req, res) => {
 	try {
 		let socketId = req.query.socketId
 		let copilotConvoId = connectedSocketsMap.get(socketId)?.copilotId
+
+		connectedSocketsMap.forEach((value, key) =>
+			console.log(
+				'copilot-messages - connectedSocketsMap==> ',
+				key,
+				' = ',
+				value
+			)
+		)
 
 		console.log('socketId==> ', socketId)
 		console.log('copilotConvoId==> ', copilotConvoId)
