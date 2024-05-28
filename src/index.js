@@ -197,10 +197,10 @@ app.get('/xyz', (req, res) => {
 app.get('/test', async (req, res) => {
 	try {
 		// let fu = await sendVonageWhatsappText('919558241999', 'test message')
-
+		// http://localhost:3000/test?copilotConvoId=7NMjNdzBRpoKpqfS3INBoA-in
 		let fu = await getAllCopilotMessages(req.query.copilotConvoId)
-		console.log('fu=> ', fu)
-		res.send({ fu })
+		// console.log('fu=> ', fu)
+		res.send(fu)
 	} catch (error) {
 		res.send(error)
 	}

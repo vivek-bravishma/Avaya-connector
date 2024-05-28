@@ -884,11 +884,32 @@ export async function getAllCopilotMessages(copilotId) {
 		}
 
 		let resp = await axios.request(options)
-		return resp.data
+
+		let messages = serializeCopilotMessage(resp?.data?.activities)
+		return messages
 	} catch (error) {
 		console.error('getAllCopilotMessages error=> ', error)
 		return error
 	}
+}
+
+export async function serializeCopilotMessage(messages) {
+	let filtered = messages?.filter((message) => message.type === 'message')
+	let serializedMessages = filtered?.map((message) => {
+		return {
+			from: {
+				id: message?.from?.id,
+				name: message?.from?.name,
+				role: message?.from?.role,
+			},
+			text: message?.text,
+			timestamp: message?.timestamp,
+			suggestedActions: message?.suggestedActions,
+			attachmentLayout: message?.attachmentLayout,
+			attachments: message?.attachments,
+		}
+	})
+	return serializedMessages
 }
 
 export async function getLineUserDetails(userId) {
