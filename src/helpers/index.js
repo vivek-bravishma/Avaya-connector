@@ -792,6 +792,10 @@ export async function sendCustomProviderMessage(io, socketId, reqBody) {
 		sender,
 		userType: reqBody.senderParticipantType,
 		message_type,
+		eventDate: reqBody.eventDate,
+		receivedAt: reqBody.receivedAt,
+		lastUpdatedAt: reqBody.lastUpdatedAt,
+
 		// text?: 'message text',
 		// image?: {
 		// 	name: '',
