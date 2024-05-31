@@ -201,6 +201,9 @@ export async function sendMessage(
 				headers: {
 					sourceType: channel,
 				},
+				engagementParameters: {
+					customch: 'customch',
+				},
 			},
 		}
 
