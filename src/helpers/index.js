@@ -207,6 +207,7 @@ export async function sendMessage(
 				},
 				engagementParameters: {
 					customch: 'customch',
+					customerMobileNo: mobileNumber ? mobileNumber : null,
 				},
 			},
 		}
