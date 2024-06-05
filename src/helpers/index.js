@@ -132,7 +132,8 @@ export async function sendMessage(
 	channel,
 	message_type,
 	fileDetails,
-	locationDetails
+	locationDetails,
+	mobileNumber
 ) {
 	try {
 		let { access_token } = await fetchAccessToken()
@@ -197,7 +198,10 @@ export async function sendMessage(
 				businessAccountName: integrationId,
 				// providerDialogId: channel,
 				providerDialogId: mobileNo,
-				customData: { msngChannel: channel },
+				customData: {
+					msngChannel: channel,
+					customerMobileNo: mobileNumber ? mobileNumber : null,
+				},
 				headers: {
 					sourceType: channel,
 				},

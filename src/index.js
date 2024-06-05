@@ -114,6 +114,7 @@ io.on('connection', (socket) => {
 			video,
 			file,
 			location,
+			mobileNumber,
 		} = data
 
 		connectedSocketsMap.set(socket.id, {
@@ -157,7 +158,8 @@ io.on('connection', (socket) => {
 			channel,
 			message_type,
 			fileDetails,
-			locationDetails
+			locationDetails,
+			mobileNumber
 		)
 		console.log('socket send message resp--> ', tokenResp)
 	})
