@@ -30,6 +30,7 @@ import {
 	sendCustomProviderMessage,
 	getAllCopilotMessages,
 	getLineUserDetails,
+	sendTeamsMessage,
 } from './helpers/index.js'
 
 import avayaConfig from './config/avaya.js'
@@ -372,6 +373,13 @@ app.post('/callback', async (req, res) => {
 					} else if (channel === 'sms') {
 						let smsResp = await sendSMS(recipiant, replyMsg)
 						console.log('sms resp--> ', smsResp.data)
+					} else if (channel === 'custom_teams_copilot_provider') {
+						let sendTeamsMessageResponse =
+							await sendTeamsMessage(reqBody)
+						console.log(
+							'sendTeamsMessageResponse--> ',
+							sendTeamsMessageResponse
+						)
 					} else {
 						console.log('invalid channel ---> ', channel)
 					}
@@ -732,3 +740,64 @@ app.get('/copilot-messages-cpcid', async (req, res) => {
 		res.send(error)
 	}
 })
+
+// =================== temas copilot backend ===================
+app.post('/teams-copilot-callback', async (req, res) => {
+	console.log('Post teams-copilot-callback')
+	console.log('req body==> ', req.body)
+
+	let {
+		user,
+		text,
+		message_type,
+		image,
+		audio,
+		video,
+		file,
+		location,
+		mobileNumber,
+	} = req.body
+
+	let fileDetails = undefined
+	let locationDetails = undefined
+	if (
+		message_type === 'image' ||
+		message_type === 'audio' ||
+		message_type === 'video' ||
+		message_type === 'file'
+	) {
+		let resourceFile = image
+			? image
+			: audio
+				? audio
+				: video
+					? video
+					: file
+						? file
+						: undefined
+		resourceFile.message_type = message_type
+		fileDetails = await uploadCustFileToAvaya(resourceFile)
+	} else if (message_type === 'location') {
+		locationDetails = location
+	}
+
+	let channel = 'custom_teams_copilot_provider'
+	const { conversationId, username } = user
+	// const from = socket.id
+	// const from = copilot_convo_id ? copilot_convo_id : socket.id
+
+	let tokenResp = await sendMessage(
+		username,
+		text,
+		conversationId,
+		channel,
+		message_type,
+		fileDetails,
+		locationDetails,
+		mobileNumber
+	)
+	console.log('teams-copilot-callback send message resp--> ', tokenResp)
+
+	return tokenResp
+})
+// =================== XXX temas copilot backend XXX ===================

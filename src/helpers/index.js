@@ -45,6 +45,7 @@ const {
 	lineMessageUrl,
 	lineToken,
 	VIBER_SERVICE_MESSAGE_ID,
+	TeamsBotUrl,
 } = avayaConfig
 
 const vonage = new Vonage(
@@ -942,3 +943,108 @@ export async function getLineUserDetails(userId) {
 		return error
 	}
 }
+
+// =================== temas copilot backend ===================
+// let payload = {
+// 	conversationId:
+// 		'a:1_0cmSrT9mSpwejfeT3AV4ZZtdAvR7Z1eifPX6-Rq_baSgFYQjCBaAqwju0UwXM6nrdwMny5sdTqDKFeDB6S2jk-jKP_P83rTH-iwtzWoB0KvI3_lbSAiricbOYFD-rVc',
+// 	message: {
+// 		text: 'kem cho bro',
+// 	},
+// }
+// let reqBody = {
+// 	eventType: 'MESSAGES',
+// 	correlationId: '55d01742-a3fc-4ec1-a34c-8f7a68304d4d',
+// 	eventDate: '2024-06-24T06:00:12.461Z',
+// 	messageId: '3ae9e574-b507-45cd-a077-f713c9861246',
+// 	accountId: 'MCTOTJ',
+// 	dialogId: '5c11b6b6-4b8b-465b-ac69-028049fac4c2',
+// 	engagementId: '35970c1b-cf58-4d10-a26b-8db4dc49e37d',
+// 	status: 'DELIVERED',
+// 	sessionId: null,
+// 	businessAccountName: 'c082f77d-3ae2-4e4c-8126-65db09b33767',
+// 	channelProviderId: '4e287bdf-8c96-4eae-ac46-1ff091bcbec0',
+// 	channelId: 'Messaging',
+// 	senderParticipantId: '00000000-0000-0000-0000-222222222222',
+// 	senderParticipantName: '',
+// 	senderParticipantType: 'SYSTEM',
+// 	body: {
+// 		elementType: 'text',
+// 		elementText: {
+// 			text: 'Please select the language between English, Spanish and French',
+// 			textFormat: 'PLAINTEXT',
+// 		},
+// 		payload: null,
+// 		richMediaPayload: null,
+// 	},
+// 	fallbackText: null,
+// 	headers: {
+// 		sourceAddress: null,
+// 		sourceType: 'custom-messaging:custom_teams_copilot_provider',
+// 		priority: null,
+// 		sensitivity: null,
+// 		encoding: null,
+// 		subject: null,
+// 		from: null,
+// 		to: [],
+// 		cc: [],
+// 		bcc: [],
+// 		replyTo: null,
+// 		clientDeviceTag: null,
+// 		messageSourceServerTag: null,
+// 		providerTimestamp: null,
+// 		additionalHeaders: {},
+// 	},
+// 	attachments: [],
+// 	recipientParticipants: [
+// 		{
+// 			participantId: 'E1:671ce6d83c1f91fe16b0bd8905f158b01c55f035',
+// 			participantType: 'CUSTOMER',
+// 			displayName: 'Alex Wilber',
+// 			connectionId: '3362261d-8bce-43f2-9571-c7908ac81239',
+// 			providerParticipantId: 'personal-chat-id',
+// 			channelProviderId: null,
+// 		},
+// 	],
+// 	customData: {},
+// 	messageIndex: 2,
+// 	parentMessageId: null,
+// 	providerDialogId: 'personal-chat-id',
+// 	providerSenderId: null,
+// 	providerMessageId: null,
+// 	providerParentMessageId: null,
+// 	engagementParameters: {},
+// 	receivedAt: '2024-06-24T06:00:12.453Z',
+// 	lastUpdatedAt: '2024-06-24T06:00:12.459Z',
+// }
+export async function sendTeamsMessage(reqBody) {
+	try {
+		let recipiant = reqBody.recipientParticipants[0].providerParticipantId
+
+		let type = reqBody.body.elementType
+		if (type === 'image') {
+			let imageUrl = reqBody.attachments[0].url
+		} else if (type === 'file') {
+			let fileUrl = reqBody.attachments[0].url
+		}
+		// if (type === 'text') {
+		let replyMsg = reqBody.body.elementText.text
+		// }
+
+		const payload = {
+			conversationId: recipiant,
+			message: {
+				text: replyMsg,
+			},
+		}
+		console.log('teams_payload= ', payload)
+
+		let teamsResponse = await axios.post(TeamsBotUrl, payload)
+		// let resp = await axios.post(vonageSMSUrl, payload)
+		return teamsResponse
+	} catch (error) {
+		console.error('sendTeamsMessage error=> ', error)
+		return error
+	}
+}
+// =================== XXX temas copilot backend XXX ===================
