@@ -18,6 +18,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs'
 import FormData from 'form-data'
+import { WebSocket } from 'ws'
 
 const {
 	accountId,
@@ -1047,4 +1048,265 @@ export async function sendTeamsMessage(reqBody) {
 		return error
 	}
 }
+
+export async function startCopilotConvo(teamsCopilotUsersMap, teamsConvoId) {
+	try {
+		const config = {
+			headers: {
+				Authorization: `Bearer ${copilotToken}`,
+			},
+		}
+		const { conversationId, token, streamUrl } = (
+			await axios.post(
+				'https://directline.botframework.com/v3/directline/conversations',
+				null,
+				config
+			)
+		).data
+
+		// console.log('Conversation ID:', conversationId)
+		// console.log('Token:', token)
+		// console.log('WebSocket Stream URL:', streamUrl)
+
+		teamsCopilotUsersMap.set(teamsConvoId, {
+			isEcalated: false,
+			mobileNumber: '',
+			copilotConversationId: conversationId,
+			token,
+			streamUrl,
+		})
+
+		await setupCopilotBotSocket(streamUrl, teamsConvoId)
+		const conversationDetails = {
+			conversationId: conversationId,
+			token: token,
+		}
+		await sendInitialMessage(conversationDetails)
+
+		// // Now you can use `streamUrl` to establish a WebSocket connection
+		// // Example: Implement WebSocket connection here
+		// // connectWebSocket(streamUrl);
+	} catch (error) {
+		console.error('Error starting conversation:', error.message)
+	}
+}
+
+async function setupCopilotBotSocket(streamUrl, teamsConvoId) {
+	// teamsCopilotUsersMap.set(teamsConvoId, {
+	// 	isEcalated: false,
+	// 	mobileNumber: '',
+	// 	copilotConversationId: conversationId,
+	// 	token,
+	// 	streamUrl,
+	// })
+
+	const ws = new WebSocket(streamUrl)
+
+	// WebSocket event listeners
+	ws.on('open', () => {
+		console.log('copilot botWebSocket connection established')
+	})
+
+	ws.on('message', (event) => {
+		// console.log('Received message:', event)
+		const message = event.toString('utf-8')
+
+		if (message.length < 1) {
+			return
+		}
+
+		// Example: Parse and process message data
+		try {
+			const eventData = JSON.parse(message)
+
+			if (eventData?.activities[0].type === 'message') {
+				// Process incoming message
+				console.log('Incoming message:', JSON.stringify(eventData))
+
+				// Example: Send response back to WebSocket
+				// const responseMessage = {
+				// 	type: 'response',
+				// 	data: 'Received your message',
+				// }
+				// ws.send(JSON.stringify(responseMessage))
+				eventData.activities[0].text &&
+					sendTeamsMessageFromCopilotBot(
+						teamsConvoId,
+						eventData.activities[0].text
+					)
+			}
+		} catch (error) {
+			console.error('Error parsing incoming message:', error)
+		}
+	})
+
+	ws.on('error', (error) => {
+		console.error('Copilot bot WebSocket error:', error)
+	})
+
+	ws.on('close', () => {
+		console.log('Copilot bot WebSocket connection closed')
+	})
+}
+
+async function sendInitialMessage(conversationDetails) {
+	try {
+		const { conversationId, token } = conversationDetails
+
+		const headers = {
+			Authorization: `Bearer ${token}`,
+			'Content-Type': 'application/json',
+		}
+
+		const body = JSON.stringify({
+			name: 'startConversation',
+			locale: 'en-EN', // Example: Change as per your requirement
+			type: 'event',
+			from: {
+				id: '5839aa31-0a18-4ae6-bf9a-074b29de79b3',
+				role: 'user',
+			},
+		})
+
+		const url = `https://directline.botframework.com/v3/directline/conversations/${conversationId}/activities`
+
+		const response = await axios.post(url, body, { headers })
+
+		console.log('Initial message sent:', response.data)
+		return response.data // Optional: Return data if needed
+	} catch (error) {
+		console.error('Error sending initial message:', error.message)
+		throw error // Propagate error up the call stack
+	}
+}
+
+export async function sendCopilotAiBotMsg(conversionDetails, message) {
+	const { conversationId, streamUrl, token } = conversionDetails
+	console.log('conversionDetails')
+	let headersList = {
+		authority: 'directline.botframework.com',
+		accept: '*/*',
+		'accept-language': 'en-US,en;q=0.9',
+		authorization: `Bearer ${token}`,
+		'content-type': 'application/json',
+		type: 'message',
+		text: 'test',
+	}
+
+	let bodyContent = JSON.stringify({
+		locale: 'en-EN',
+		// locale: this.locale,
+
+		type: 'message',
+		// value: this.rating,
+
+		from: {
+			id: 'user1',
+			role: 'user',
+		},
+		text: message,
+	})
+
+	let response = await fetch(
+		`https://directline.botframework.com/v3/directline/conversations/${conversationId}/activities`,
+		{
+			method: 'POST',
+			body: bodyContent,
+			headers: headersList,
+		}
+	)
+
+	let data = await response.text()
+	console.log('wtf', data)
+}
+
+export async function sendTeamsMessageFromCopilotBot(teamsConvoId, text) {
+	try {
+		let recipiant = teamsConvoId
+
+		// let type = reqBody.body.elementType
+		// if (type === 'image') {
+		// 	let imageUrl = reqBody.attachments[0].url
+		// } else if (type === 'file') {
+		// 	let fileUrl = reqBody.attachments[0].url
+		// }
+		// if (type === 'text') {
+		let replyMsg = text
+		// }
+
+		const payload = {
+			conversationId: recipiant,
+			message: {
+				text: replyMsg,
+			},
+		}
+		console.log('teams_payload= ', payload)
+
+		let teamsResponse = await axios.post(TeamsBotUrl, payload)
+		// let resp = await axios.post(vonageSMSUrl, payload)
+		return teamsResponse
+	} catch (error) {
+		console.error('sendTeamsMessage error=> ', error)
+		return error
+	}
+}
+
+// export async function uploadCustFileToAvaya(media) {
+// 	// console.log('media--> ', media)
+// 	try {
+// 		let fileName = media.name
+// 		let fileData = media.data
+// 		let message_type = media.message_type
+// 		let { access_token } = await fetchAccessToken()
+// 		let { fileType, fileSize, file, fileFullPathName } =
+// 			await getCustFileDetails(fileData, fileName)
+// 		console.log(
+// 			'===========asdf==========> ',
+// 			fileName,
+// 			fileType,
+// 			fileSize,
+// 			fileFullPathName
+// 		)
+// 		const options = {
+// 			method: 'POST',
+// 			url: avayaFileUploadUrl,
+// 			headers: {
+// 				accept: 'application/json',
+// 				authorization: `Bearer ${access_token}`,
+// 				'content-type': 'application/json',
+// 			},
+// 			data: {
+// 				mediaName: fileName,
+// 				mediaContentType: fileType,
+// 				// mediaContentType:
+// 				// 	message_type === 'audio'
+// 				// 		? `audio/opus`
+// 				// 		: message_type === 'video'
+// 				// 			? `video/mp4`
+// 				// 			: fileType,
+// 				mediaSize: fileSize,
+// 			},
+// 		}
+// 		console.log('============== generate file url payload==> ', options)
+// 		let resp = await axios.request(options)
+// 		let uploadFilePayload = {
+// 			fileFullPathName,
+// 			mediaName: resp.data.mediaName,
+// 			mediaContentType: resp.data.mediaContentType,
+// 			mediaSize: resp.data.mediaSize,
+// 			mediaId: resp.data.mediaId,
+// 			uploadSignedUri: resp.data.uploadSignedUri,
+// 		}
+// 		let uploadImgResp = await uploadImage(uploadFilePayload)
+// 		console.log('=================> ', uploadImgResp)
+// 		return uploadImgResp
+// 	} catch (error) {
+// 		console.log('Error in uploadFileToAvaya=>  ', error)
+// 		if (error.response.data) {
+// 			throw error.response.data
+// 		} else {
+// 			throw error.message
+// 		}
+// 	}
+// }
 // =================== XXX temas copilot backend XXX ===================
