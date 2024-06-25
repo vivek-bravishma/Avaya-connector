@@ -850,31 +850,39 @@ app.post('/teams-copilot-callback', async (req, res) => {
 	let text = req.body.text
 	let message_type = req.body.attachments?.[0]?.contentType ?? 'text'
 
+	// console.log('convo id====== copilot =======> ', conversationId)
+	let teamsCopilotUserDets = teamsCopilotUsersMap.get(conversationId)
 	// console.log(
-	// 	'(teamsCopilotUsersMap.get(conversationId))==> ',
-	// 	teamsCopilotUsersMap.get(conversationId)
+	// 	'teamsCopilotUserDets=====copilot ======> ',
+	// 	teamsCopilotUserDets
 	// )
 
-	if (teamsCopilotUsersMap.get(conversationId) === undefined) {
+	if (teamsCopilotUserDets === undefined) {
+		console.log('/teams-copilot-callback initial msg')
 		await startCopilotConvo(teamsCopilotUsersMap, conversationId)
-	} else if (teamsCopilotUsersMap.get(conversationId).isEcalated === true) {
+	} else if (teamsCopilotUserDets.isEcalated === true) {
+		let teamsUserData = teamsCopilotUsersMap.get(conversationId)
+		console.log('teamsUserData Ecalated ')
+		// console.log('teamsUserData isEcalated ==> ', teamsUserData)
 		let channel = 'custom_teams_copilot_provider'
+		let mobileNumber = teamsUserData.mobileNumber
 		let resp = await sendMessage(
 			username,
 			text,
 			conversationId,
 			channel,
-			message_type
+			message_type,
 			// fileDetails,
 			// locationDetails,
-			// mobileNumber
+			mobileNumber
 		)
 		console.log('teams-copilot-callback send message resp--> ', resp)
 
 		return resp
 	} else {
 		let teamsUserData = teamsCopilotUsersMap.get(conversationId)
-		// console.log('teamsUserData==> ', teamsUserData)
+		console.log('teamsUserData not isEcalated==> ')
+		// console.log('teamsUserData not isEcalated==> ', teamsUserData)
 		let conversionDetails = {
 			conversationId: teamsUserData.copilotConversationId,
 			streamUrl: teamsUserData.streamUrl,
@@ -891,6 +899,23 @@ app.post('/teams-copilot-callback', async (req, res) => {
 	res.send('ok')
 })
 
-// startCopilotConvo()// if undefined
+app.post('/teams-copilot-init-callback', async (req, res) => {
+	console.log('Post teams-copilot-init-callback')
+	// console.log('req body==> ', req.body)
+
+	let conversationId = req.body.conversation.id
+	// console.log('convo id=============> ', conversationId)
+
+	let teamsCopilotUserDets = teamsCopilotUsersMap.get(conversationId)
+	// console.log('teamsCopilotUserDets==> ', teamsCopilotUserDets)
+
+	if (teamsCopilotUserDets === undefined) {
+		await startCopilotConvo(teamsCopilotUsersMap, conversationId)
+	} else {
+		console.log('something is wrong you should not be here')
+	}
+
+	res.send('ok')
+})
 
 // =================== XXX temas copilot backend XXX ===================

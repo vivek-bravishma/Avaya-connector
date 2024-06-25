@@ -7,7 +7,7 @@ let config = {
 	integrationName: 'SECUSTOM',
 	grant_type: 'client_credentials',
 	avayaBaseUrl: 'https://experience.api.avayacloud.com',
-	// copilotToken: '6mJ1ECPC0dk.hunFtodVEt72En-mSOwQiSLcBabsgjK_zwLVeAYq6U8',//copy chatbot
+	// copilotToken: '6mJ1ECPC0dk.hunFtodVEt72En-mSOwQiSLcBabsgjK_zwLVeAYq6U8', //copy chatbot
 	copilotToken: 'mcKUYtZZ-5A.SNSxaE9Tb2FcLEtXhLAq-ISgM4LAwiH-dzaAvCAuTZA', //univ cop
 }
 

@@ -1032,13 +1032,23 @@ export async function sendTeamsMessage(reqBody) {
 		let replyMsg = reqBody.body.elementText.text
 		// }
 
+		let activityData = {
+			//activities[0]
+			type: 'message',
+			from: {
+				id: reqBody.senderParticipantId,
+				name: reqBody.senderParticipantName,
+				role: reqBody.senderParticipantType,
+			},
+			text: reqBody.body.elementText.text,
+			// attachments:reqBody.
+		}
+
 		const payload = {
 			conversationId: recipiant,
-			message: {
-				text: replyMsg,
-			},
+			activityData: activityData,
 		}
-		console.log('teams_payload= ', payload)
+		// console.log('teams_payload= ', payload)
 
 		let teamsResponse = await axios.post(TeamsBotUrl, payload)
 		// let resp = await axios.post(vonageSMSUrl, payload)
@@ -1070,13 +1080,18 @@ export async function startCopilotConvo(teamsCopilotUsersMap, teamsConvoId) {
 
 		teamsCopilotUsersMap.set(teamsConvoId, {
 			isEcalated: false,
-			mobileNumber: '',
+			mobileNumber: null,
+			name: null,
 			copilotConversationId: conversationId,
 			token,
 			streamUrl,
 		})
 
-		await setupCopilotBotSocket(streamUrl, teamsConvoId)
+		await setupCopilotBotSocket(
+			streamUrl,
+			teamsConvoId,
+			teamsCopilotUsersMap
+		)
 		const conversationDetails = {
 			conversationId: conversationId,
 			token: token,
@@ -1091,15 +1106,11 @@ export async function startCopilotConvo(teamsCopilotUsersMap, teamsConvoId) {
 	}
 }
 
-async function setupCopilotBotSocket(streamUrl, teamsConvoId) {
-	// teamsCopilotUsersMap.set(teamsConvoId, {
-	// 	isEcalated: false,
-	// 	mobileNumber: '',
-	// 	copilotConversationId: conversationId,
-	// 	token,
-	// 	streamUrl,
-	// })
-
+async function setupCopilotBotSocket(
+	streamUrl,
+	teamsConvoId,
+	teamsCopilotUsersMap
+) {
 	const ws = new WebSocket(streamUrl)
 
 	// WebSocket event listeners
@@ -1119,9 +1130,10 @@ async function setupCopilotBotSocket(streamUrl, teamsConvoId) {
 		try {
 			const eventData = JSON.parse(message)
 
+			// console.log('let IncomingMessage =', JSON.stringify(eventData))
+
 			if (eventData?.activities[0].type === 'message') {
 				// Process incoming message
-				console.log('Incoming message:', JSON.stringify(eventData))
 
 				// Example: Send response back to WebSocket
 				// const responseMessage = {
@@ -1129,11 +1141,23 @@ async function setupCopilotBotSocket(streamUrl, teamsConvoId) {
 				// 	data: 'Received your message',
 				// }
 				// ws.send(JSON.stringify(responseMessage))
-				eventData.activities[0].text &&
+				eventData.activities[0]?.from?.role === 'bot' &&
 					sendTeamsMessageFromCopilotBot(
 						teamsConvoId,
-						eventData.activities[0].text
+						eventData.activities[0]
 					)
+			}
+			if (eventData?.activities[0].type === 'event') {
+				if (
+					eventData.activities[0]?.from?.role === 'bot' &&
+					eventData.activities[0]?.name === 'connectToAgent'
+				) {
+					let userDetails = teamsCopilotUsersMap.get(teamsConvoId)
+					userDetails.isEcalated = true
+					userDetails.mobileNumber = eventData.activities[0]?.value[1]
+					userDetails.name = eventData.activities[0]?.value[0]
+					teamsCopilotUsersMap.set(teamsConvoId, userDetails)
+				}
 			}
 		} catch (error) {
 			console.error('Error parsing incoming message:', error)
@@ -1220,27 +1244,47 @@ export async function sendCopilotAiBotMsg(conversionDetails, message) {
 	console.log('wtf', data)
 }
 
-export async function sendTeamsMessageFromCopilotBot(teamsConvoId, text) {
+// export async function sendTeamsMessageFromCopilotBot(teamsConvoId, text) {
+// 	try {
+// 		let recipiant = teamsConvoId
+
+// 		// let type = reqBody.body.elementType
+// 		// if (type === 'image') {
+// 		// 	let imageUrl = reqBody.attachments[0].url
+// 		// } else if (type === 'file') {
+// 		// 	let fileUrl = reqBody.attachments[0].url
+// 		// }
+// 		// if (type === 'text') {
+// 		let replyMsg = text
+// 		// }
+
+// 		const payload = {
+// 			conversationId: recipiant,
+// 			message: {
+// 				text: replyMsg,
+// 			},
+// 		}
+// 		console.log('teams_payload= ', payload)
+
+// 		let teamsResponse = await axios.post(TeamsBotUrl, payload)
+// 		// let resp = await axios.post(vonageSMSUrl, payload)
+// 		return teamsResponse
+// 	} catch (error) {
+// 		console.error('sendTeamsMessage error=> ', error)
+// 		return error
+// 	}
+// }
+
+export async function sendTeamsMessageFromCopilotBot(
+	teamsConvoId,
+	activityData
+) {
 	try {
-		let recipiant = teamsConvoId
-
-		// let type = reqBody.body.elementType
-		// if (type === 'image') {
-		// 	let imageUrl = reqBody.attachments[0].url
-		// } else if (type === 'file') {
-		// 	let fileUrl = reqBody.attachments[0].url
-		// }
-		// if (type === 'text') {
-		let replyMsg = text
-		// }
-
 		const payload = {
-			conversationId: recipiant,
-			message: {
-				text: replyMsg,
-			},
+			conversationId: teamsConvoId,
+			activityData: activityData,
 		}
-		console.log('teams_payload= ', payload)
+		// console.log('teams_payload= ', payload)
 
 		let teamsResponse = await axios.post(TeamsBotUrl, payload)
 		// let resp = await axios.post(vonageSMSUrl, payload)
