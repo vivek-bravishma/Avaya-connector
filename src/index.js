@@ -916,13 +916,15 @@ app.post('/teams-copilot-init-callback', async (req, res) => {
 	// console.log('req body==> ', req.body)
 
 	let conversationId = req.body.conversation.id
+	let username = req.body.from.name
+
 	// console.log('convo id=============> ', conversationId)
 
 	let teamsCopilotUserDets = teamsCopilotUsersMap.get(conversationId)
 	// console.log('teamsCopilotUserDets==> ', teamsCopilotUserDets)
 
 	if (teamsCopilotUserDets === undefined) {
-		await startCopilotConvo(teamsCopilotUsersMap, conversationId)
+		await startCopilotConvo(teamsCopilotUsersMap, conversationId, username)
 	} else {
 		console.log('something is wrong you should not be here')
 	}

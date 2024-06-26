@@ -1059,7 +1059,11 @@ export async function sendTeamsMessage(reqBody) {
 	}
 }
 
-export async function startCopilotConvo(teamsCopilotUsersMap, teamsConvoId) {
+export async function startCopilotConvo(
+	teamsCopilotUsersMap,
+	teamsConvoId,
+	username
+) {
 	try {
 		const config = {
 			headers: {
@@ -1085,6 +1089,7 @@ export async function startCopilotConvo(teamsCopilotUsersMap, teamsConvoId) {
 			copilotConversationId: conversationId,
 			token,
 			streamUrl,
+			username,
 		})
 
 		await setupCopilotBotSocket(
@@ -1119,28 +1124,14 @@ async function setupCopilotBotSocket(
 	})
 
 	ws.on('message', (event) => {
-		// console.log('Received message:', event)
 		const message = event.toString('utf-8')
-
 		if (message.length < 1) {
 			return
 		}
-
-		// Example: Parse and process message data
 		try {
 			const eventData = JSON.parse(message)
-
 			// console.log('let IncomingMessage =', JSON.stringify(eventData))
-
 			if (eventData?.activities[0].type === 'message') {
-				// Process incoming message
-
-				// Example: Send response back to WebSocket
-				// const responseMessage = {
-				// 	type: 'response',
-				// 	data: 'Received your message',
-				// }
-				// ws.send(JSON.stringify(responseMessage))
 				eventData.activities[0]?.from?.role === 'bot' &&
 					sendTeamsMessageFromCopilotBot(
 						teamsConvoId,
@@ -1157,6 +1148,14 @@ async function setupCopilotBotSocket(
 					userDetails.mobileNumber = eventData.activities[0]?.value[1]
 					userDetails.name = eventData.activities[0]?.value[0]
 					teamsCopilotUsersMap.set(teamsConvoId, userDetails)
+
+					sendMessage(
+						userDetails.username,
+						'connect to agent',
+						teamsConvoId,
+						'custom_teams_copilot_provider',
+						'text'
+					)
 				}
 			}
 		} catch (error) {
@@ -1241,7 +1240,7 @@ export async function sendCopilotAiBotMsg(conversionDetails, message) {
 	)
 
 	let data = await response.text()
-	console.log('wtf', data)
+	console.log('sendCopilotAiBotMsg data=', data)
 }
 
 // export async function sendTeamsMessageFromCopilotBot(teamsConvoId, text) {
