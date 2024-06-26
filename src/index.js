@@ -843,19 +843,31 @@ let teamsCopilotUsersMap = new Map()
 // teamsCopilotUsersMap.set(conversationId,{isEcalated:false,mobileNumber:''})
 app.post('/teams-copilot-callback', async (req, res) => {
 	console.log('Post teams-copilot-callback')
-	// console.log('req body==> ', req.body)
+	console.log('req body==> ', req.body)
 
 	let conversationId = req.body.conversation.id
 	let username = req.body.from.name
 	let text = req.body.text
-	let message_type = req.body.attachments?.[0]?.contentType ?? 'text'
-
+	let message_type = 'text'
+	if (req.body.attachments?.[0]?.contentType) {
+		let contentType = req.body.attachments?.[0]?.contentType?.split('/')[0]
+		if (contentType === 'text') message_type = contentType
+		else if (contentType === 'application') message_type = 'file'
+	}
+	// contentType: 'application/vnd.microsoft.teams.file.download.info'
+	// attachments: [ { contentType: 'text/html', content: '<p>hi</p>' } ],
 	// console.log('convo id====== copilot =======> ', conversationId)
 	let teamsCopilotUserDets = teamsCopilotUsersMap.get(conversationId)
 	// console.log(
 	// 	'teamsCopilotUserDets=====copilot ======> ',
 	// 	teamsCopilotUserDets
 	// )
+
+	console.log('dets===> ', username, text, conversationId, message_type)
+	console.log(
+		'req.body.attachments?.[0]?.contentType==> ',
+		req.body.attachments?.[0]?.contentType
+	)
 
 	if (teamsCopilotUserDets === undefined) {
 		console.log('/teams-copilot-callback initial msg')
