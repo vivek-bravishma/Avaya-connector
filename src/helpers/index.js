@@ -1052,7 +1052,7 @@ export async function sendTeamsMessage(reqBody) {
 
 		let teamsResponse = await axios.post(TeamsBotUrl, payload)
 		// let resp = await axios.post(vonageSMSUrl, payload)
-		return teamsResponse
+		return teamsResponse.data
 	} catch (error) {
 		console.error('sendTeamsMessage error=> ', error)
 		return error
