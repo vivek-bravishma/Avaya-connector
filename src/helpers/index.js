@@ -1062,7 +1062,7 @@ export async function sendTeamsMessage(reqBody) {
 export async function startCopilotConvo(
 	teamsCopilotUsersMap,
 	teamsConvoId,
-	username
+	username_teams
 ) {
 	try {
 		const config = {
