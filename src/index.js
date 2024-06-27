@@ -747,65 +747,6 @@ app.get('/copilot-messages-cpcid', async (req, res) => {
 
 // =================== temas copilot backend ===================
 
-// app.post('/teams-copilot-callback', async (req, res) => {
-// 	console.log('Post teams-copilot-callback')
-// 	console.log('req body==> ', req.body)
-
-// 	let {
-// 		user,
-// 		text,
-// 		message_type,
-// 		image,
-// 		audio,
-// 		video,
-// 		file,
-// 		location,
-// 		mobileNumber,
-// 	} = req.body
-
-// 	let fileDetails = undefined
-// 	let locationDetails = undefined
-// 	if (
-// 		message_type === 'image' ||
-// 		message_type === 'audio' ||
-// 		message_type === 'video' ||
-// 		message_type === 'file'
-// 	) {
-// 		let resourceFile = image
-// 			? image
-// 			: audio
-// 				? audio
-// 				: video
-// 					? video
-// 					: file
-// 						? file
-// 						: undefined
-// 		resourceFile.message_type = message_type
-// 		fileDetails = await uploadCustFileToAvaya(resourceFile)
-// 	} else if (message_type === 'location') {
-// 		locationDetails = location
-// 	}
-
-// 	let channel = 'custom_teams_copilot_provider'
-// 	const { conversationId, username } = user
-// 	// const from = socket.id
-// 	// const from = copilot_convo_id ? copilot_convo_id : socket.id
-
-// 	let tokenResp = await sendMessage(
-// 		username,
-// 		text,
-// 		conversationId,
-// 		channel,
-// 		message_type,
-// 		fileDetails,
-// 		locationDetails,
-// 		mobileNumber
-// 	)
-// 	console.log('teams-copilot-callback send message resp--> ', tokenResp)
-
-// 	return tokenResp
-// })
-
 // const payload = {
 // 	// from: context.activity.conversation.id,
 // 	// text: context.activity.text,
@@ -850,7 +791,7 @@ app.post('/teams-copilot-callback', async (req, res) => {
 	)
 
 	let conversationId = req.body.conversation.id
-	let username = req.body.from.name
+	let username_teams = req.body.from.name
 	let text = req.body.text
 	let message_type = 'text'
 	if (req.body.attachments?.[0]?.contentType) {
@@ -867,7 +808,7 @@ app.post('/teams-copilot-callback', async (req, res) => {
 	// 	teamsCopilotUserDets
 	// )
 
-	// console.log('dets===> ', username, text, conversationId, message_type)
+	// console.log('dets===> ', username_teams, text, conversationId, message_type)
 	// console.log(
 	// 	'req.body.attachments?.[0]?.contentType==> ',
 	// 	req.body.attachments?.[0]?.contentType
@@ -875,7 +816,11 @@ app.post('/teams-copilot-callback', async (req, res) => {
 
 	if (teamsCopilotUserDets === undefined) {
 		console.log('/teams-copilot-callback initial msg')
-		await startCopilotConvo(teamsCopilotUsersMap, conversationId)
+		await startCopilotConvo(
+			teamsCopilotUsersMap,
+			conversationId,
+			username_teams
+		)
 	} else if (teamsCopilotUserDets.isEcalated === true) {
 		let teamsUserData = teamsCopilotUsersMap.get(conversationId)
 		console.log('//teamsUserData Ecalated ')
@@ -883,7 +828,7 @@ app.post('/teams-copilot-callback', async (req, res) => {
 		let channel = 'custom_teams_copilot_provider'
 		let mobileNumber = teamsUserData.mobileNumber
 		let resp = await sendMessage(
-			username,
+			username_teams,
 			text,
 			conversationId,
 			channel,
@@ -923,7 +868,7 @@ app.post('/teams-copilot-init-callback', async (req, res) => {
 	// console.log('req body==> ', req.body)
 
 	let conversationId = req.body.conversation.id
-	let username = req.body.from.name
+	let username_teams = req.body.from.name
 
 	// console.log('convo id=============> ', conversationId)
 
@@ -931,7 +876,11 @@ app.post('/teams-copilot-init-callback', async (req, res) => {
 	// console.log('teamsCopilotUserDets==> ', teamsCopilotUserDets)
 
 	if (teamsCopilotUserDets === undefined) {
-		await startCopilotConvo(teamsCopilotUsersMap, conversationId, username)
+		await startCopilotConvo(
+			teamsCopilotUsersMap,
+			conversationId,
+			username_teams
+		)
 	} else {
 		console.log('something is wrong you should not be here')
 	}

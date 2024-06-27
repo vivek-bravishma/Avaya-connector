@@ -1085,11 +1085,11 @@ export async function startCopilotConvo(
 		teamsCopilotUsersMap.set(teamsConvoId, {
 			isEcalated: false,
 			mobileNumber: null,
-			name: null,
+			username_teams,
 			copilotConversationId: conversationId,
 			token,
 			streamUrl,
-			username,
+			username: username_teams,
 		})
 
 		await setupCopilotBotSocket(
@@ -1146,7 +1146,7 @@ async function setupCopilotBotSocket(
 					let userDetails = teamsCopilotUsersMap.get(teamsConvoId)
 					userDetails.isEcalated = true
 					userDetails.mobileNumber = eventData.activities[0]?.value[1]
-					userDetails.name = eventData.activities[0]?.value[0]
+					userDetails.username = eventData.activities[0]?.value[0]
 					teamsCopilotUsersMap.set(teamsConvoId, userDetails)
 
 					sendMessage(
@@ -1154,7 +1154,10 @@ async function setupCopilotBotSocket(
 						'connect to agent',
 						teamsConvoId,
 						'custom_teams_copilot_provider',
-						'text'
+						'text',
+						null,
+						null,
+						userDetails.mobileNumber
 					)
 				}
 			}
@@ -1219,11 +1222,7 @@ export async function sendCopilotAiBotMsg(conversionDetails, message) {
 
 	let bodyContent = JSON.stringify({
 		locale: 'en-EN',
-		// locale: this.locale,
-
 		type: 'message',
-		// value: this.rating,
-
 		from: {
 			id: 'user1',
 			role: 'user',
