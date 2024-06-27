@@ -228,7 +228,11 @@ app.post('/callback', async (req, res) => {
 	try {
 		const reqBody = req.body
 		console.log(
-			`======== callback post request ${reqBody.eventType} ${reqBody.senderParticipantType} =========`
+			`//======== callback post request ${reqBody.eventType} ${reqBody.senderParticipantType} =========`
+		)
+		console.log(
+			'let avaya_callback_request_body = ',
+			JSON.stringify(reqBody)
 		)
 		if (reqBody.eventType === 'MESSAGES') {
 			if (
@@ -243,19 +247,16 @@ app.post('/callback', async (req, res) => {
 				let channel =
 					reqBody?.headers?.sourceType?.split('custom-messaging:')[1]
 				console.log(
-					'Recipient=> ',
+					'let Recipient= ',
 					recipiant,
-					'  replyMsg=> ',
+					' let  replyMsg= ',
 					replyMsg,
-					'   providerDialogId=> ',
+					' let   providerDialogId= ',
 					reqBody.providerDialogId,
-					'  channel ==> ',
+					' let  channel == ',
 					channel
 				)
-				console.log(
-					'============================================= ',
-					reqBody
-				)
+
 				if (recipiant) {
 					if (channel === 'whatsapp') {
 						let type = reqBody.body.elementType
@@ -380,15 +381,15 @@ app.post('/callback', async (req, res) => {
 						let sendTeamsMessageResponse =
 							await sendTeamsMessage(reqBody)
 						console.log(
-							'sendTeamsMessageResponse--> ',
-							sendTeamsMessageResponse
+							'let avaya_send_Message_to_teams_response= ',
+							JSON.stringify(sendTeamsMessageResponse)
 						)
 					} else {
 						console.log('invalid channel ---> ', channel)
 					}
 				}
 			} else if (reqBody.senderParticipantType === 'CUSTOMER') {
-				console.log('customer msg --> ', reqBody.body.elementText.text)
+				// console.log('let customer msg --> ', reqBody.body.elementText.text)
 				let channel =
 					reqBody?.headers?.sourceType?.split('custom-messaging:')[1]
 
@@ -401,7 +402,7 @@ app.post('/callback', async (req, res) => {
 					providerParticipantId: resipntPartyCustProPartyId,
 				})
 
-				console.log('avayaCustomker===> ', avayaCustomer)
+				// console.log('avayaCustomker===> ', avayaCustomer)
 
 				if (!avayaCustomer) {
 					let resipntPartyCustConnId =
@@ -418,7 +419,7 @@ app.post('/callback', async (req, res) => {
 						dialogId: reqBody?.dialogId,
 						connectionId: resipntPartyCustConnId,
 					}
-					console.log('customerDAt ', customerData)
+					// console.log('customerDAt ', customerData)
 					const avayaCustomer = new Customer(customerData)
 					await avayaCustomer.save()
 				}
@@ -842,8 +843,11 @@ let teamsCopilotUsersMap = new Map()
 
 // teamsCopilotUsersMap.set(conversationId,{isEcalated:false,mobileNumber:''})
 app.post('/teams-copilot-callback', async (req, res) => {
-	console.log('Post teams-copilot-callback')
-	console.log('req body==> ', req.body)
+	console.log('// Post teams-copilot-callback')
+	console.log(
+		'let teams_copilot_callback_req_body=',
+		JSON.stringify(req.body)
+	)
 
 	let conversationId = req.body.conversation.id
 	let username = req.body.from.name
@@ -863,18 +867,18 @@ app.post('/teams-copilot-callback', async (req, res) => {
 	// 	teamsCopilotUserDets
 	// )
 
-	console.log('dets===> ', username, text, conversationId, message_type)
-	console.log(
-		'req.body.attachments?.[0]?.contentType==> ',
-		req.body.attachments?.[0]?.contentType
-	)
+	// console.log('dets===> ', username, text, conversationId, message_type)
+	// console.log(
+	// 	'req.body.attachments?.[0]?.contentType==> ',
+	// 	req.body.attachments?.[0]?.contentType
+	// )
 
 	if (teamsCopilotUserDets === undefined) {
 		console.log('/teams-copilot-callback initial msg')
 		await startCopilotConvo(teamsCopilotUsersMap, conversationId)
 	} else if (teamsCopilotUserDets.isEcalated === true) {
 		let teamsUserData = teamsCopilotUsersMap.get(conversationId)
-		console.log('teamsUserData Ecalated ')
+		console.log('//teamsUserData Ecalated ')
 		// console.log('teamsUserData isEcalated ==> ', teamsUserData)
 		let channel = 'custom_teams_copilot_provider'
 		let mobileNumber = teamsUserData.mobileNumber
@@ -888,12 +892,15 @@ app.post('/teams-copilot-callback', async (req, res) => {
 			// locationDetails,
 			mobileNumber
 		)
-		console.log('teams-copilot-callback send message resp--> ', resp)
+		console.log(
+			'let teams_send_message_to_agent_resp= ',
+			JSON.stringify(resp)
+		)
 
 		return resp
 	} else {
 		let teamsUserData = teamsCopilotUsersMap.get(conversationId)
-		console.log('teamsUserData not isEcalated==> ')
+		console.log('//teamsUserData not isEcalated==> ')
 		// console.log('teamsUserData not isEcalated==> ', teamsUserData)
 		let conversionDetails = {
 			conversationId: teamsUserData.copilotConversationId,
@@ -912,7 +919,7 @@ app.post('/teams-copilot-callback', async (req, res) => {
 })
 
 app.post('/teams-copilot-init-callback', async (req, res) => {
-	console.log('Post teams-copilot-init-callback')
+	console.log('// Post teams-copilot-init-callback')
 	// console.log('req body==> ', req.body)
 
 	let conversationId = req.body.conversation.id

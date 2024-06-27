@@ -143,7 +143,7 @@ export async function sendMessage(
 		let body
 		let attachments = []
 
-		console.log('Message Type ==> ', message_type)
+		// console.log('Message Type ==> ', message_type)
 		if (message_type === 'text') {
 			body = {
 				elementType: 'text',
@@ -179,7 +179,7 @@ export async function sendMessage(
 				},
 			}
 		}
-		console.log('Sending Message')
+		console.log('//Sending Message')
 		var options = {
 			method: 'POST',
 			url: sendMsgUrl,
@@ -214,7 +214,7 @@ export async function sendMessage(
 			},
 		}
 
-		// console.log('options=============> ', JSON.stringify(options))
+		console.log('let avaya_send_msg_payload= ', JSON.stringify(options))
 
 		let resp = await axios.request(options)
 		// console.log('send message response data==> ', resp.data)
@@ -1048,7 +1048,7 @@ export async function sendTeamsMessage(reqBody) {
 			conversationId: recipiant,
 			activityData: activityData,
 		}
-		// console.log('teams_payload= ', payload)
+		console.log('let send_msg_to_teams_payload= ', JSON.stringify(payload))
 
 		let teamsResponse = await axios.post(TeamsBotUrl, payload)
 		// let resp = await axios.post(vonageSMSUrl, payload)
@@ -1195,7 +1195,8 @@ async function sendInitialMessage(conversationDetails) {
 
 		const response = await axios.post(url, body, { headers })
 
-		console.log('Initial message sent:', response.data)
+		// console.log('//Initial message sent:', response.data)
+		console.log('//Initial message sent')
 		return response.data // Optional: Return data if needed
 	} catch (error) {
 		console.error('Error sending initial message:', error.message)
@@ -1205,7 +1206,7 @@ async function sendInitialMessage(conversationDetails) {
 
 export async function sendCopilotAiBotMsg(conversionDetails, message) {
 	const { conversationId, streamUrl, token } = conversionDetails
-	console.log('conversionDetails')
+	// console.log('conversionDetails')
 	let headersList = {
 		authority: 'directline.botframework.com',
 		accept: '*/*',
@@ -1240,7 +1241,7 @@ export async function sendCopilotAiBotMsg(conversionDetails, message) {
 	)
 
 	let data = await response.text()
-	console.log('sendCopilotAiBotMsg data=', data)
+	console.log('// sendCopilotAiBotMsg data=', JSON.stringify(data))
 }
 
 // export async function sendTeamsMessageFromCopilotBot(teamsConvoId, text) {
