@@ -1294,6 +1294,17 @@ export async function sendTeamsMessageFromCopilotBot(
 	}
 }
 
+export async function endTeamsAgentInteraction(
+	conversationId,
+	teamsCopilotUsersMap
+) {
+	try {
+		let user = teamsCopilotUsersMap.get(conversationId)
+		user.isEcalated = false
+		teamsCopilotUsersMap.set(user)
+	} catch (error) {}
+}
+
 // export async function uploadCustFileToAvaya(media) {
 // 	// console.log('media--> ', media)
 // 	try {
