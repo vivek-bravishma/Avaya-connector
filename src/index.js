@@ -33,6 +33,7 @@ import {
 	sendTeamsMessage,
 	startCopilotConvo,
 	sendCopilotAiBotMsg,
+	endTeamsAgentInteraction,
 } from './helpers/index.js'
 
 import avayaConfig from './config/avaya.js'
@@ -423,6 +424,14 @@ app.post('/callback', async (req, res) => {
 					const avayaCustomer = new Customer(customerData)
 					await avayaCustomer.save()
 				}
+			}
+		} else if (reqBody.eventType === 'PARTICIPANT_DISCONNECTED') {
+			await endTeamsAgentInteraction(
+				reqBody.providerDialogId,
+				teamsCopilotUsersMap
+			)
+			if (reqBody.participantType === 'CUSTOMER') {
+			} else {
 			}
 		}
 		res.send('callback url working')
@@ -875,15 +884,15 @@ app.post('/teams-copilot-init-callback', async (req, res) => {
 	let teamsCopilotUserDets = teamsCopilotUsersMap.get(conversationId)
 	// console.log('teamsCopilotUserDets==> ', teamsCopilotUserDets)
 
-	if (teamsCopilotUserDets === undefined) {
-		await startCopilotConvo(
-			teamsCopilotUsersMap,
-			conversationId,
-			username_teams
-		)
-	} else {
-		console.log('something is wrong you should not be here')
-	}
+	// if (teamsCopilotUserDets === undefined) {
+	await startCopilotConvo(
+		teamsCopilotUsersMap,
+		conversationId,
+		username_teams
+	)
+	// } else {
+	// 	console.log('something is wrong you should not be here')
+	// }
 
 	res.send('ok')
 })
