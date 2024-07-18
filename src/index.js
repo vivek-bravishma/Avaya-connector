@@ -34,6 +34,7 @@ import {
 	startCopilotConvo,
 	sendCopilotAiBotMsg,
 	endTeamsAgentInteraction,
+	sendVonageViberTextApi,
 } from './helpers/index.js'
 
 import avayaConfig from './config/avaya.js'
@@ -341,7 +342,11 @@ app.post('/callback', async (req, res) => {
 							)
 							console.log('vonage file resp--> ', vonageResp.data)
 						} else {
-							let vonageResp = await sendVonageViberText(
+							// let vonageResp = await sendVonageViberText(
+							// 	recipiant,
+							// 	replyMsg
+							// )
+							let vonageResp = await sendVonageViberTextApi(
 								recipiant,
 								replyMsg
 							)

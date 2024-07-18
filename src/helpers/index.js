@@ -202,14 +202,14 @@ export async function sendMessage(
 				providerDialogId: mobileNo,
 				customData: {
 					msngChannel: channel,
-					customerMobileNo: mobileNumber ? mobileNumber : null,
+					customerMobileNo: mobileNumber ? mobileNumber : '',
 				},
 				headers: {
 					sourceType: channel,
 				},
 				engagementParameters: {
 					customch: 'customch',
-					customerMobileNo: mobileNumber ? mobileNumber : null,
+					customerMobileNo: mobileNumber ? mobileNumber : '',
 				},
 			},
 		}
@@ -679,6 +679,33 @@ export async function sendVonageViberText(to, text) {
 				from: VIBER_SERVICE_MESSAGE_ID,
 			})
 		)
+		return resp
+	} catch (error) {
+		console.log('send vonage viber text error--> ', error)
+		throw error
+	}
+}
+
+export async function sendVonageViberTextApi(to, text) {
+	try {
+		const payload = {
+			from: '22353',
+			to,
+			message_type: 'text',
+			text,
+			channel: 'viber',
+		}
+		const config = {
+			headers: {
+				'Content-Type': 'application/json',
+				Accept: 'application/json',
+			},
+			auth: {
+				username: vonageApiKey,
+				password: vonageApiSecret,
+			},
+		}
+		let resp = await axios.post(vonageUrl, payload, config)
 		return resp
 	} catch (error) {
 		console.log('send vonage viber text error--> ', error)

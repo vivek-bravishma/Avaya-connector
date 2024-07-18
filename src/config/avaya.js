@@ -8,7 +8,8 @@ let config = {
 	grant_type: 'client_credentials',
 	avayaBaseUrl: 'https://experience.api.avayacloud.com',
 	// copilotToken: '6mJ1ECPC0dk.hunFtodVEt72En-mSOwQiSLcBabsgjK_zwLVeAYq6U8', //copy chatbot
-	copilotToken: 'mcKUYtZZ-5A.SNSxaE9Tb2FcLEtXhLAq-ISgM4LAwiH-dzaAvCAuTZA', //univ cop
+	// copilotToken: 'mcKUYtZZ-5A.SNSxaE9Tb2FcLEtXhLAq-ISgM4LAwiH-dzaAvCAuTZA', //univ cop
+	copilotToken: 'CAOzaN_kffw.qeboxJ5Ra3e3VHTwg4uSj8vDX-FiAYKbIR_14FZryt4', //it support
 }
 
 config = {
