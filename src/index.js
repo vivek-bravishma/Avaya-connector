@@ -49,6 +49,7 @@ const port = process.env.PORT || 3000
 
 // const devChannels = ['whatsapp', 'Line', 'viber_service', 'custom_chat_provider', 'sms', 'custom_teams_copilot_provider'];
 // const devChannel = 'custom_teams_copilot_provider'
+const stagingEnv = true
 
 app.use(cors())
 app.use(express.json({ limit: '100mb' }))
@@ -235,24 +236,27 @@ app.post('/callback', async (req, res) => {
 	try {
 		const reqBody = req.body
 		// Forward data to localtunnel URL
-		const devHeaders = {
-			'bypass-tunnel-reminder': 'custom-tunnel-dev',
-			'User-Agent': 'MyCustomBrowser/1.0',
+		if (stagingEnv) {
+			const devHeaders = {
+				'bypass-tunnel-reminder': 'custom-tunnel-dev',
+				'User-Agent': 'MyCustomBrowser/1.0',
+			}
+			axios
+				.post('https://avya-connectr-dev.loca.lt/callback', reqBody, {
+					devHeaders,
+				})
+				.then(() => {
+					console.log('Successfully forwarded data to localtunnel.')
+				})
+				.catch((error) => {
+					console.error(
+						'Error forwarding data to localtunnel:',
+						error.message
+					)
+					// Log the error, but do not affect main functionality
+				})
 		}
-		axios
-			.post('https://avya-connectr-dev.loca.lt/callback', reqBody, {
-				devHeaders,
-			})
-			.then(() => {
-				console.log('Successfully forwarded data to localtunnel.')
-			})
-			.catch((error) => {
-				console.error(
-					'Error forwarding data to localtunnel:',
-					error.message
-				)
-				// Log the error, but do not affect main functionality
-			})
+
 		console.log(
 			`//======== callback post request ${reqBody.eventType} ${reqBody.senderParticipantType} =========`
 		)
