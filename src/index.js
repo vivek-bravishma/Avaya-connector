@@ -34,6 +34,7 @@ import {
 	startCopilotConvo,
 	sendCopilotAiBotMsg,
 	endTeamsAgentInteraction,
+	sendMessageFromTeamsToAvaya,
 } from './helpers/index.js'
 
 import avayaConfig from './config/avaya.js'
@@ -802,12 +803,7 @@ app.post('/teams-copilot-callback', async (req, res) => {
 	let conversationId = req.body.conversation.id
 	let username_teams = req.body.from.name
 	let text = req.body.text
-	let message_type = 'text'
-	if (req.body.attachments?.[0]?.contentType) {
-		let contentType = req.body.attachments?.[0]?.contentType?.split('/')[0]
-		if (contentType === 'text') message_type = contentType
-		else if (contentType === 'application') message_type = 'file'
-	}
+
 	// contentType: 'application/vnd.microsoft.teams.file.download.info'
 	// attachments: [ { contentType: 'text/html', content: '<p>hi</p>' } ],
 	// console.log('convo id====== copilot =======> ', conversationId)
@@ -832,26 +828,14 @@ app.post('/teams-copilot-callback', async (req, res) => {
 		)
 	} else if (teamsCopilotUserDets.isEcalated === true) {
 		let teamsUserData = teamsCopilotUsersMap.get(conversationId)
-		console.log('//teamsUserData Ecalated ')
-		// console.log('teamsUserData isEcalated ==> ', teamsUserData)
-		let channel = 'custom_teams_copilot_provider'
-		let mobileNumber = teamsUserData.mobileNumber
-		let resp = await sendMessage(
-			username_teams,
-			text,
-			conversationId,
-			channel,
-			message_type,
-			// fileDetails,
-			// locationDetails,
-			mobileNumber
-		)
-		console.log(
-			'let teams_send_message_to_agent_resp= ',
-			JSON.stringify(resp)
-		)
 
-		return resp
+		console.log('//teamsUserData Ecalated ')
+
+		let resp = await sendMessageFromTeamsToAvaya({
+			teamsUserData,
+			messageData: req.body,
+		})
+		console.log('resss=> ', resp)
 	} else {
 		let teamsUserData = teamsCopilotUsersMap.get(conversationId)
 		console.log('//teamsUserData not isEcalated==> ')

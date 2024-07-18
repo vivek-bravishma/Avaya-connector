@@ -19,6 +19,8 @@ import { fileURLToPath } from 'url'
 import fs from 'fs'
 import FormData from 'form-data'
 import { WebSocket } from 'ws'
+import { Stream } from 'stream'
+// const stream = require('stream')
 
 const {
 	accountId,
@@ -78,6 +80,7 @@ export async function fetchAccessToken() {
 		}
 
 		let resp = await axios.request(options)
+		// console.log('resp. toke====> ', resp.data)
 		return resp.data
 	} catch (error) {
 		if (error.response.data) {
@@ -143,7 +146,7 @@ export async function sendMessage(
 		let body
 		let attachments = []
 
-		// console.log('Message Type ==> ', message_type)
+		console.log('Message Type ==> ', message_type)
 		if (message_type === 'text') {
 			body = {
 				elementType: 'text',
@@ -220,7 +223,7 @@ export async function sendMessage(
 		// console.log('send message response data==> ', resp.data)
 		return resp.data
 	} catch (error) {
-		if (error.response.data) {
+		if (error.response?.data) {
 			console.log(
 				'sendMessage.error.response.data==> ',
 				error.response.data
@@ -1305,62 +1308,225 @@ export async function endTeamsAgentInteraction(
 	} catch (error) {}
 }
 
-// export async function uploadCustFileToAvaya(media) {
-// 	// console.log('media--> ', media)
-// 	try {
-// 		let fileName = media.name
-// 		let fileData = media.data
-// 		let message_type = media.message_type
-// 		let { access_token } = await fetchAccessToken()
-// 		let { fileType, fileSize, file, fileFullPathName } =
-// 			await getCustFileDetails(fileData, fileName)
-// 		console.log(
-// 			'===========asdf==========> ',
-// 			fileName,
-// 			fileType,
-// 			fileSize,
-// 			fileFullPathName
-// 		)
-// 		const options = {
-// 			method: 'POST',
-// 			url: avayaFileUploadUrl,
-// 			headers: {
-// 				accept: 'application/json',
-// 				authorization: `Bearer ${access_token}`,
-// 				'content-type': 'application/json',
-// 			},
-// 			data: {
-// 				mediaName: fileName,
-// 				mediaContentType: fileType,
-// 				// mediaContentType:
-// 				// 	message_type === 'audio'
-// 				// 		? `audio/opus`
-// 				// 		: message_type === 'video'
-// 				// 			? `video/mp4`
-// 				// 			: fileType,
-// 				mediaSize: fileSize,
-// 			},
-// 		}
-// 		console.log('============== generate file url payload==> ', options)
-// 		let resp = await axios.request(options)
-// 		let uploadFilePayload = {
-// 			fileFullPathName,
-// 			mediaName: resp.data.mediaName,
-// 			mediaContentType: resp.data.mediaContentType,
-// 			mediaSize: resp.data.mediaSize,
-// 			mediaId: resp.data.mediaId,
-// 			uploadSignedUri: resp.data.uploadSignedUri,
-// 		}
-// 		let uploadImgResp = await uploadImage(uploadFilePayload)
-// 		console.log('=================> ', uploadImgResp)
-// 		return uploadImgResp
-// 	} catch (error) {
-// 		console.log('Error in uploadFileToAvaya=>  ', error)
-// 		if (error.response.data) {
-// 			throw error.response.data
-// 		} else {
-// 			throw error.message
-// 		}
-// 	}
-// }
+export async function sendMessageFromTeamsToAvaya({
+	teamsUserData,
+	messageData,
+}) {
+	let channel = 'custom_teams_copilot_provider'
+	let message_type = 'text'
+	let fileDetails = undefined
+	let locationDetails = undefined
+
+	let mobileNumber = teamsUserData?.mobileNumber
+	let username_provided = teamsUserData?.username
+
+	let username_teams = messageData?.from?.name
+	let conversationId = messageData?.conversation?.id
+	let text = messageData?.text
+	let attachments = messageData?.attachments
+	let attachmentSizes = messageData?.channelData?.attachmentSizes
+
+	console.log('teamsUserData=  ', teamsUserData)
+	console.log('conversationId=  ', conversationId)
+	console.log('messageData=  ', messageData)
+
+	if (attachments && attachments.length > 0) {
+		let contentType = attachments[0].contentType
+
+		if (contentType.includes('image')) {
+			message_type = 'image'
+		} else if (contentType.includes('video')) {
+			// message_type = 'video'
+			message_type = 'file'
+		} else if (contentType.includes('audio')) {
+			// message_type = 'audio'
+			message_type = 'file'
+		} else if (contentType.includes('application')) {
+			message_type = 'file'
+		} else if (contentType.includes('text')) {
+			// message_type = 'text'
+			message_type = 'file'
+		} else {
+			message_type = 'text'
+		}
+
+		let fileUploadResponse = await handleTeamsFileUploadToAvaya({
+			attachments,
+			attachmentSizes,
+		})
+
+		fileDetails = fileUploadResponse
+	}
+
+	// if (messageData.attachments?.[0]?.contentType) {
+	// 	let contentType =
+	// 		messageData.attachments?.[0]?.contentType?.split('/')[0]
+	// 	if (contentType === 'text') message_type = contentType
+	// 	else if (contentType === 'application') message_type = 'file'
+	// }
+
+	let resp = await sendMessage(
+		username_teams,
+		text,
+		conversationId,
+		channel,
+		message_type,
+		fileDetails,
+		locationDetails,
+		mobileNumber
+	)
+	console.log('let teams_send_message_to_agent_resp= ', JSON.stringify(resp))
+
+	return resp
+}
+
+async function handleTeamsFileUploadToAvaya({ attachments, attachmentSizes }) {
+	try {
+		let { access_token } = await fetchAccessToken()
+
+		for (let i = 0; i < attachments.length; i++) {
+			if (i === 0) {
+				const { mediaContentType, mediaSize, mediaFile } =
+					await fetchAttachmentDetails(attachments[i].contentUrl)
+
+				let generateUploadUrlResponse = await generateUploadUrlAvaya({
+					fileName: attachments[i].name,
+					fileType: attachments[i].contentType,
+					fileSize: attachmentSizes[i],
+					access_token,
+					avayaFileUploadUrl,
+				})
+
+				let uploadAttachmentResponse = await uploadAttachmentToAvaya({
+					uploadSignedUri: generateUploadUrlResponse.uploadSignedUri,
+					mediaName: generateUploadUrlResponse.mediaName,
+					mediaFile, // ??
+				})
+				console.log(
+					'uploadAttachmentResponse==> ',
+					uploadAttachmentResponse
+				)
+				return uploadAttachmentResponse
+			}
+		}
+	} catch (error) {}
+}
+
+async function fetchAttachmentDetails(url) {
+	try {
+		const response = await axios.get(url, { responseType: 'stream' })
+		const contentType = response.headers['content-type']
+		const mediaFile = response.data
+		let mediaSize = 0
+		const sizeStream = new Stream.PassThrough()
+
+		mediaFile.pipe(sizeStream)
+
+		const chunks = []
+		sizeStream.on('data', (chunk) => {
+			mediaSize += chunk.length
+			chunks.push(chunk)
+		})
+
+		return new Promise((resolve, reject) => {
+			sizeStream.on('end', () => {
+				resolve({
+					mediaContentType: contentType,
+					mediaSize: mediaSize,
+					mediaFile: Buffer.concat(chunks),
+				})
+			})
+
+			sizeStream.on('error', (error) => {
+				reject(error)
+			})
+		})
+	} catch (error) {
+		console.error('Error fetching file details:', error.message)
+		throw error
+	}
+}
+
+async function generateUploadUrlAvaya({
+	fileName,
+	fileType,
+	fileSize,
+	access_token,
+	avayaFileUploadUrl,
+}) {
+	try {
+		const options = {
+			method: 'POST',
+			url: avayaFileUploadUrl,
+			headers: {
+				accept: 'application/json',
+				authorization: `Bearer ${access_token}`,
+				'content-type': 'application/json',
+			},
+			data: {
+				mediaName: fileName,
+				mediaContentType: fileType,
+				mediaSize: fileSize,
+			},
+		}
+
+		console.log(
+			'============== generate attachment url payload==> ',
+			options
+		)
+		let resp = await axios.request(options)
+		return resp.data
+	} catch (error) {
+		if (error.response.data) {
+			console.error(
+				'Error generateUploadUrlAvaya: error.response.data',
+				error.response.data
+			)
+			throw error.response.data
+		} else {
+			console.error('Error generateUploadUrlAvaya: error', error)
+			throw error.message
+		}
+	}
+}
+
+async function uploadAttachmentToAvaya({
+	uploadSignedUri,
+	mediaName,
+	mediaFile,
+	// mediaContentType,
+	// mediaSize,
+	// mediaId,
+}) {
+	try {
+		const formData = new FormData()
+		// formData.append('mediaName', mediaName)
+		// formData.append('mediaContentType', mediaContentType)
+		// formData.append('mediaSize', mediaSize)
+		// formData.append('mediaId', mediaId)
+		// formData.append('mediaFile', fs.createReadStream(fileFullPathName))
+		formData.append('mediaFile', mediaFile, { filename: mediaName })
+
+		const uploadResponse = await axios.post(uploadSignedUri, formData, {
+			headers: {
+				'Content-Type': 'multipart/form-data',
+				...formData.getHeaders(),
+			},
+		})
+
+		return uploadResponse.data
+	} catch (error) {
+		if (error.response.data) {
+			console.error(
+				'Error uploadAttachmentToAvaya: error.response.data',
+				error.response.data
+			)
+			throw error.response.data
+		} else {
+			console.error('Error uploadAttachmentToAvaya: error', error)
+			throw error.message
+		}
+	}
+}
+
 // =================== XXX temas copilot backend XXX ===================
