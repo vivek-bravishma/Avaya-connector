@@ -1052,26 +1052,76 @@ export async function sendTeamsMessage(reqBody) {
 	try {
 		let recipiant = reqBody.recipientParticipants[0].providerParticipantId
 
-		let type = reqBody.body.elementType
-		if (type === 'image') {
-			let imageUrl = reqBody.attachments[0].url
-		} else if (type === 'file') {
-			let fileUrl = reqBody.attachments[0].url
-		}
-		// if (type === 'text') {
-		let replyMsg = reqBody.body.elementText.text
+		// let type = reqBody.body.elementType
+		// if (type === 'image') {
+		// 	let imageUrl = reqBody.attachments[0].url
+		// } else if (type === 'file') {
+		// 	let fileUrl = reqBody.attachments[0].url
+		// }
+		// // if (type === 'text') {
+		// let replyMsg = reqBody.body.elementText.text
+		// // }
+
+		// // let activityData = {
+		// // 	//activities[0]
+		// // 	type: 'message',
+		// // 	from: {
+		// // 		id: reqBody.senderParticipantId,
+		// // 		name: reqBody.senderParticipantName,
+		// // 		role: reqBody.senderParticipantType,
+		// // 	},
+		// // 	text: reqBody.body.elementText.text,
+		// // 	// attachments:reqBody.
+		// // }
+
+		// let activityData = {
+		// 	attachments: [
+		// 		// {
+		// 		// 	name: reqBody.attachments[0]?.name,
+		// 		// 	contentType: reqBody.attachments[0]?.contentType,
+		// 		// 	contentUrl: reqBody.attachments[0]?.url,
+		// 		// },
+		// 	],
+		// 	channelData: {
+		// 		// attachmentSizes: [reqBody.attachments[0]?.size],
+		// 	},
+		// 	type: 'message',
+		// 	text: reqBody.body.elementText.text,
+		// 	from: {
+		// 		id: reqBody.senderParticipantId,
+		// 		name: reqBody.senderParticipantName,
+		// 		role: reqBody.senderParticipantType,
+		// 	},
 		// }
 
 		let activityData = {
-			//activities[0]
+			attachments: [],
+			channelData: {
+				attachmentSizes: [],
+			},
 			type: 'message',
+			text: reqBody.body.elementText.text,
 			from: {
 				id: reqBody.senderParticipantId,
 				name: reqBody.senderParticipantName,
 				role: reqBody.senderParticipantType,
 			},
-			text: reqBody.body.elementText.text,
-			// attachments:reqBody.
+		}
+
+		if (reqBody.attachments && reqBody.attachments.length > 0) {
+			reqBody.attachments.forEach((attachment) => {
+				activityData.attachments.push({
+					name: attachment.name,
+					contentType: attachment.contentType,
+					contentUrl: attachment.url,
+				})
+
+				if (reqBody.attachmentSizes) {
+					activityData.channelData.attachmentSizes.push(
+						attachment.size
+					)
+				}
+			})
 		}
 
 		const payload = {
@@ -1382,7 +1432,7 @@ export async function sendMessageFromTeamsToAvaya({
 			attachmentSizes,
 		})
 
-		fileDetails = fileUploadResponse
+		fileDetails = fileUploadResponse ? fileUploadResponse : undefined
 	}
 
 	// if (messageData.attachments?.[0]?.contentType) {
@@ -1436,7 +1486,10 @@ async function handleTeamsFileUploadToAvaya({ attachments, attachmentSizes }) {
 				return uploadAttachmentResponse
 			}
 		}
-	} catch (error) {}
+	} catch (error) {
+		console.log('handleTeamsFileUploadToAvaya Error---> ', error)
+		return undefined
+	}
 }
 
 async function fetchAttachmentDetails(url) {
