@@ -1400,39 +1400,68 @@ export async function sendMessageFromTeamsToAvaya({
 	let username_teams = messageData?.from?.name
 	let conversationId = messageData?.conversation?.id
 	let text = messageData?.text
-	let attachments = messageData?.attachments
-	let attachmentSizes = messageData?.channelData?.attachmentSizes
+
+	let attachmentsTemp = messageData?.attachments
+
+	let attachments = attachmentsTemp.filter(
+		(ele) => !ele.contentType.includes('text')
+	)
+
+	// let attachmentSizes = messageData?.channelData?.attachmentSizes
 
 	console.log('teamsUserData=  ', teamsUserData)
 	console.log('conversationId=  ', conversationId)
 	console.log('messageData=  ', messageData)
 
 	if (attachments && attachments.length > 0) {
-		let contentType = attachments[0].contentType
+		// let contentType = attachments[0].contentType
 
-		if (contentType.includes('image')) {
-			message_type = 'image'
-		} else if (contentType.includes('video')) {
-			// message_type = 'video'
-			message_type = 'file'
-		} else if (contentType.includes('audio')) {
-			// message_type = 'audio'
-			message_type = 'file'
-		} else if (contentType.includes('application')) {
-			message_type = 'file'
-		} else if (contentType.includes('text')) {
-			// message_type = 'text'
-			message_type = 'file'
-		} else {
-			message_type = 'text'
-		}
+		// if (contentType.includes('image')) {
+		// 	message_type = 'image'
+		// } else if (contentType.includes('video')) {
+		// 	// message_type = 'video'
+		// 	message_type = 'file'
+		// } else if (contentType.includes('audio')) {
+		// 	// message_type = 'audio'
+		// 	message_type = 'file'
+		// } else if (contentType.includes('application')) {
+		// 	message_type = 'file'
+		// 	// } else if (contentType.includes('text')) {
+		// 	// 	// message_type = 'text'
+		// 	// 	message_type = 'file'
+		// } else {
+		// 	message_type = 'text'
+		// }
 
 		let fileUploadResponse = await handleTeamsFileUploadToAvaya({
 			attachments,
-			attachmentSizes,
+			// attachmentSizes,
 		})
 
-		fileDetails = fileUploadResponse ? fileUploadResponse : undefined
+		fileDetails = fileUploadResponse?.uploadAttachmentResponse
+			? fileUploadResponse.uploadAttachmentResponse
+			: undefined
+
+		let attachmentContentType = fileUploadResponse?.mediaContentType
+			? fileUploadResponse.mediaContentType
+			: ''
+
+		if (attachmentContentType.includes('image')) {
+			message_type = 'image'
+		} else if (attachmentContentType.includes('video')) {
+			// message_type = 'video'
+			message_type = 'file'
+		} else if (attachmentContentType.includes('audio')) {
+			// message_type = 'audio'
+			message_type = 'file'
+		} else if (attachmentContentType.includes('application')) {
+			message_type = 'file'
+			// } else if (attachmentContentType.includes('text')) {
+			// 	// message_type = 'text'
+			// 	message_type = 'file'
+		} else {
+			message_type = 'text'
+		}
 	}
 
 	// if (messageData.attachments?.[0]?.contentType) {
@@ -1457,19 +1486,27 @@ export async function sendMessageFromTeamsToAvaya({
 	return resp
 }
 
-async function handleTeamsFileUploadToAvaya({ attachments, attachmentSizes }) {
+async function handleTeamsFileUploadToAvaya({
+	attachments,
+	/*attachmentSizes*/
+}) {
 	try {
 		let { access_token } = await fetchAccessToken()
 
 		for (let i = 0; i < attachments.length; i++) {
 			if (i === 0) {
 				const { mediaContentType, mediaSize, mediaFile } =
-					await fetchAttachmentDetails(attachments[i].contentUrl)
+					await fetchAttachmentDetails(
+						attachments[i].content?.downloadUrl
+					)
+				// await fetchAttachmentDetails(attachments[i].contentUrl)
 
 				let generateUploadUrlResponse = await generateUploadUrlAvaya({
 					fileName: attachments[i].name,
-					fileType: attachments[i].contentType,
-					fileSize: attachmentSizes[i],
+					// fileType: attachments[i].contentType,
+					fileType: mediaContentType,
+					// fileSize: attachmentSizes[i],
+					fileSize: mediaSize,
 					access_token,
 					avayaFileUploadUrl,
 				})
@@ -1477,13 +1514,13 @@ async function handleTeamsFileUploadToAvaya({ attachments, attachmentSizes }) {
 				let uploadAttachmentResponse = await uploadAttachmentToAvaya({
 					uploadSignedUri: generateUploadUrlResponse.uploadSignedUri,
 					mediaName: generateUploadUrlResponse.mediaName,
-					mediaFile, // ??
+					mediaFile,
 				})
 				console.log(
 					'uploadAttachmentResponse==> ',
 					uploadAttachmentResponse
 				)
-				return uploadAttachmentResponse
+				return { uploadAttachmentResponse, mediaContentType }
 			}
 		}
 	} catch (error) {
