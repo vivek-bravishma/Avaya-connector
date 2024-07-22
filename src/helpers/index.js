@@ -526,7 +526,10 @@ export async function getFileDetails(url, fileName) {
 			fileFullPathName,
 		}
 	} catch (error) {
-		console.error('Error fetching file details:', error.message)
+		console.error(
+			'Error fetching file details getFileDetails:',
+			error.message
+		)
 		return null
 	}
 }
@@ -798,7 +801,10 @@ export async function getCustFileDetails(fileData, fileName) {
 			fileFullPathName,
 		}
 	} catch (error) {
-		console.error('Error fetching file details:', error.message)
+		console.error(
+			'Error fetching file details getCustFileDetails:',
+			error.message
+		)
 		return null
 	}
 }
@@ -1522,7 +1528,10 @@ async function fetchAttachmentDetails(url) {
 			})
 		})
 	} catch (error) {
-		console.error('Error fetching file details:', error.message)
+		console.error(
+			'Error fetching file details fetchAttachmentDetails:',
+			error.message
+		)
 		throw error
 	}
 }
