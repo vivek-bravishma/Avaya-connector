@@ -140,7 +140,8 @@ export async function sendMessage(
 	message_type,
 	fileDetails,
 	locationDetails,
-	mobileNumber
+	mobileNumber,
+	caseNumber
 ) {
 	try {
 		let { access_token } = await fetchAccessToken()
@@ -208,6 +209,7 @@ export async function sendMessage(
 				customData: {
 					msngChannel: channel,
 					customerMobileNo: mobileNumber ? mobileNumber : '',
+					caseNumber: caseNumber ? caseNumber : '',
 				},
 				headers: {
 					sourceType: channel,
@@ -215,6 +217,7 @@ export async function sendMessage(
 				engagementParameters: {
 					customch: 'customch',
 					customerMobileNo: mobileNumber ? mobileNumber : '',
+					caseNumber: caseNumber ? caseNumber : '',
 				},
 			},
 		}
@@ -1235,6 +1238,7 @@ async function setupCopilotBotSocket(
 					userDetails.isEcalated = true
 					userDetails.mobileNumber = eventData.activities[0]?.value[1]
 					userDetails.username = eventData.activities[0]?.value[0]
+					userDetails.caseNumber = eventData.activities[0]?.value[2]
 					teamsCopilotUsersMap.set(teamsConvoId, userDetails)
 
 					sendMessage(
@@ -1245,7 +1249,8 @@ async function setupCopilotBotSocket(
 						'text',
 						null,
 						null,
-						userDetails.mobileNumber
+						userDetails.mobileNumber,
+						userDetails.caseNumber
 					)
 				}
 			}
@@ -1405,6 +1410,7 @@ export async function sendMessageFromTeamsToAvaya({
 	let mobileNumber = teamsUserData?.mobileNumber
 	// let mobileNumber = maskNumber(teamsUserData?.mobileNumber)
 	let username_provided = teamsUserData?.username
+	let caseNumber = teamsUserData?.caseNumber
 
 	let username_teams = messageData?.from?.name
 	let conversationId = messageData?.conversation?.id
@@ -1488,7 +1494,8 @@ export async function sendMessageFromTeamsToAvaya({
 		message_type,
 		fileDetails,
 		locationDetails,
-		mobileNumber
+		mobileNumber,
+		caseNumber
 	)
 	console.log('let teams_send_message_to_agent_resp= ', JSON.stringify(resp))
 
