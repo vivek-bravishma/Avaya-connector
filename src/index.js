@@ -756,7 +756,7 @@ app.get('/copilot-messages', async (req, res) => {
 
 		connectedSocketsMap.forEach((value, key) =>
 			console.log(
-				'copilot-messages - connectedSocketsMap==> ',
+				'copilot-messages - WEB- connectedSocketsMap==> ',
 				key,
 				' = ',
 				value
@@ -767,7 +767,29 @@ app.get('/copilot-messages', async (req, res) => {
 		console.log('copilotConvoId==> ', copilotConvoId)
 
 		if (!copilotConvoId) {
-			res.send('invalid customer id')
+			// 			teamsCopilotUsersMap
+			// copilotConversationId
+			teamsCopilotUsersMap.forEach((value, key) =>
+				console.log(
+					'copilot-messages - Teams - teamsCopilotUsersMap==> ',
+					key,
+					' = ',
+					value
+				)
+			)
+
+			let copilotTeamsConvoId =
+				teamsCopilotUsersMap.get(socketId)?.copilotConversationId
+			console.log('copilotTeamsConvoId==> ', copilotTeamsConvoId)
+
+			if (!copilotTeamsConvoId) {
+				res.send('invalid customer id')
+			} else {
+				let copilotMessages =
+					await getAllCopilotMessages(copilotTeamsConvoId)
+				console.log('copilotTeamsMessages=> ', copilotMessages)
+				res.send(copilotMessages)
+			}
 		} else {
 			let copilotMessages = await getAllCopilotMessages(copilotConvoId)
 			console.log('copilotMessages=> ', copilotMessages)
