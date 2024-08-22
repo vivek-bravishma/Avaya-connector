@@ -49,6 +49,8 @@ const {
 	lineToken,
 	VIBER_SERVICE_MESSAGE_ID,
 	TeamsBotUrl,
+	JourneyIFrameUrl,
+	JourneySystemUrl,
 } = avayaConfig
 
 const vonage = new Vonage(
@@ -1401,6 +1403,7 @@ export async function sendMessageFromTeamsToAvaya({
 	let locationDetails = undefined
 
 	let mobileNumber = teamsUserData?.mobileNumber
+	// let mobileNumber = maskNumber(teamsUserData?.mobileNumber)
 	let username_provided = teamsUserData?.username
 
 	let username_teams = messageData?.from?.name
@@ -1655,4 +1658,150 @@ async function uploadAttachmentToAvaya({
 	}
 }
 
+function maskNumber(number) {
+	return number.toString().replace(/.(?=.{4})/g, 'X')
+}
+
 // =================== XXX temas copilot backend XXX ===================
+
+// =====================  Journey Auth  =====================
+export async function sendJourneyAuth({ authType, deliveryMethod, uniqueId }) {
+	try {
+		let userData = await journeyUserDetails(uniqueId)
+		// console.log('userData===> ', userData)
+		// deliveryMethod = 'email' | 'sms' | 'push' | 'token' | 'url'
+		// authType = 'OTP' | 'FACIAL' | 'PUSH'
+		let pipelineKey = null
+		let mode = null
+
+		switch (authType) {
+			case 'OTP':
+				pipelineKey = '990843ed-308c-432a-8e1d-a804a05aa66b' //OTP
+				break
+
+			case 'FACIAL':
+				pipelineKey = 'dc2db844-c4a9-45fe-9316-44edd90b68dd' //facial
+				break
+
+			case 'PUSH':
+				pipelineKey = 'bb8b9fa3-d8cf-41bf-bdcc-cc8c2c1798c8' //push
+				break
+
+			default:
+				pipelineKey = '990843ed-308c-432a-8e1d-a804a05aa66b' //OTP
+				break
+		}
+
+		switch (deliveryMethod) {
+			case 'email':
+				mode = 'email'
+				break
+			case 'sms':
+				mode = 'sms'
+				break
+			case 'push':
+				mode = 'push-notification'
+				break
+			case 'token':
+				mode = 'token'
+				break
+			case 'url':
+				mode = 'url'
+				break
+			default:
+				mode = 'sms'
+				break
+		}
+
+		let data = {
+			user: {
+				phoneNumber: userData.phoneNumbers[0],
+				uniqueId: userData.uniqueId,
+				firstName: userData.firstName,
+				lastName: userData.lastName,
+			},
+			language: 'en-US',
+			delivery: {
+				method: mode,
+				deviceId: userData.devices[0]?.id,
+				phoneNumber: userData.phoneNumbers[0],
+				email: userData.email,
+			},
+			configuration: {},
+			pipelineKey: pipelineKey,
+		}
+
+		let config = {
+			method: 'post',
+			maxBodyLength: Infinity,
+			url: 'https://app.journeyid.io/api/iframe/executions',
+			headers: {
+				Authorization:
+					'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJrYW1sZXNoamFpbiIsImlmciI6IjBlYjcyNDUzLTZmNmMtNDdhMC05YmRhLWYyOTFkN2E1MDNhOCIsImV4cCI6MTcwODY4NTAyNzgzOSwiaWF0IjoxNzA4Njg0OTQxfQ.28rpU-75lyTBO8ZpBP9HrlaWLZNMvc1qekZq92dNGFI',
+				accept: 'application/json',
+				'content-type': 'application/json',
+			},
+			data: data,
+		}
+		// console.log('sendJourneyAuth config==> ', config)
+		const response = await axios.request(config)
+		return response.data
+	} catch (error) {
+		throw error?.response?.data || error
+	}
+}
+
+export async function journeyUserDetails(uniqueId) {
+	try {
+		let res = await axios.get(
+			`https://app.journeyid.io/api/system/customers/lookup?unique_id=${uniqueId.replace('+', '')}`,
+			{
+				headers: {
+					Authorization:
+						'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2MiOiI5YWQyYTczYy1hY2E0LTQxNjktYmI1ZS04YWNlZGRhYjI1ODIiLCJleHAiOjE3NDU0MDIxNTksImlzcyI6ImpvdXJuZXkiLCJwcnAiOiJzeXN0ZW0ifQ.BfCquLs5dFeFzbwjJYCvkL4oWvSih3uRNes2KCqEoLQ',
+				},
+			}
+		)
+		return res.data
+	} catch (error) {
+		throw error?.response?.data || error.message
+	}
+}
+
+export async function journeyAuthStatus(userId, sessionId) {
+	return new Promise((resolve, reject) => {
+		const url = `wss://app.journeyid.io/api/iframe/ws/users/${userId}/sessions/${sessionId}`
+
+		let ws = new WebSocket(url)
+
+		ws.on('open', () => {
+			console.log('Connected to websocket')
+			ws.send(
+				'CONNECT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJrYW1sZXNoamFpbiIsImlmciI6IjBlYjcyNDUzLTZmNmMtNDdhMC05YmRhLWYyOTFkN2E1MDNhOCIsImV4cCI6MTcwODY4NTAyNzgzOSwiaWF0IjoxNzA4Njg0OTQxfQ.28rpU-75lyTBO8ZpBP9HrlaWLZNMvc1qekZq92dNGFI'
+			)
+		})
+
+		ws.on('message', (data) => {
+			let messageData = JSON.parse(data)
+			console.log('Received message:', messageData.event)
+
+			if (
+				messageData.event === 'session-authenticated' ||
+				messageData.event === 'execution-completed'
+			) {
+				ws.close()
+				resolve({ authentication: true })
+			}
+		})
+
+		ws.on('close', () => {
+			console.log('Connection closed')
+			// connect();
+		})
+
+		ws.on('error', (err) => {
+			reject(err)
+		})
+	})
+}
+// =================== XXX Journey Auth XXX ===================

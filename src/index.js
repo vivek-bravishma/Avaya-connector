@@ -36,6 +36,9 @@ import {
 	endTeamsAgentInteraction,
 	sendVonageViberTextApi,
 	sendMessageFromTeamsToAvaya,
+	sendJourneyAuth,
+	journeyUserDetails,
+	journeyAuthStatus,
 } from './helpers/index.js'
 
 import avayaConfig from './config/avaya.js'
@@ -913,4 +916,37 @@ app.post('/teams-copilot-init-callback', async (req, res) => {
 	res.send('ok')
 })
 
-// =================== XXX temas copilot backend XXX ===================
+app.post('/journey-auth', async (req, res) => {
+	try {
+		if (!req.body.uniqueId)
+			return res.status(400).send('uniqueId field required')
+		let payload = {
+			// deliveryMethod: 'email' | 'sms' | 'push' | 'token' | 'url',
+			deliveryMethod: req.body.deliveryMethod || 'url',
+			// authType: 'OTP' | 'FACIAL' | 'PUSH',
+			authType: req.body.authType || 'FACIAL',
+			uniqueId: req.body.uniqueId,
+		}
+		let resp = await sendJourneyAuth(payload)
+		if (resp.url)
+			resp.qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&margin=50&data=${resp.url}`
+		// let resp = await journeyUserDetails('919028477947')
+		console.log('resp==> ', resp)
+		res.status(201).send(resp)
+	} catch (error) {
+		console.log('errr=> ', error)
+		res.status(404).send(error)
+	}
+})
+
+app.post('/journey-auth-status', async (req, res) => {
+	let { userId, sessionId } = req.body
+	if (!userId.trim() || !sessionId.trim()) {
+		return res.status(400).send('userId or sessionId missing')
+	}
+
+	let authRes = await journeyAuthStatus(userId, sessionId)
+	console.log(authRes)
+
+	return res.send(authRes)
+})
