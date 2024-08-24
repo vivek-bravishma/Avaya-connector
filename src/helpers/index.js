@@ -1140,7 +1140,7 @@ export async function sendTeamsMessage(reqBody, messType) {
 				})
 			}
 		} else if (messType === 'JOINED') {
-			recipiant = reqBody.providerParticipantId
+			recipiant = reqBody.providerDialogId
 
 			activityData = {
 				type: 'message',
