@@ -415,8 +415,10 @@ app.post('/callback', async (req, res) => {
 						let smsResp = await sendSMS(recipiant, replyMsg)
 						console.log('sms resp--> ', smsResp.data)
 					} else if (channel === 'custom_teams_copilot_provider') {
-						let sendTeamsMessageResponse =
-							await sendTeamsMessage(reqBody)
+						let sendTeamsMessageResponse = await sendTeamsMessage(
+							reqBody,
+							'MESSAGE'
+						)
 						console.log(
 							'let avaya_send_Message_to_teams_response= ',
 							JSON.stringify(sendTeamsMessageResponse)
@@ -462,14 +464,38 @@ app.post('/callback', async (req, res) => {
 				}
 			}
 		} else if (reqBody.eventType === 'PARTICIPANT_DISCONNECTED') {
+			console.log(
+				'=============== PARTICIPANT_DISCONNECTED Participant Type ==============='
+			)
+			console.log(reqBody.participantType)
+			console.log(
+				'=============== PARTICIPANT_DISCONNECTED Participant Type ==============='
+			)
 			await endTeamsAgentInteraction(
 				reqBody.providerDialogId,
 				teamsCopilotUsersMap
 			)
 			if (reqBody.participantType === 'CUSTOMER') {
+			} else if (reqBody.participantType === 'AGENT') {
+			} else {
+			}
+		} else if (reqBody.eventType === 'PARTICIPANT_ADDED') {
+			if (reqBody.participantType === 'CUSTOMER') {
+			} else if (reqBody.participantType === 'AGENT') {
+				// send client message that agent is added
+				// let clientId=reqBody.providerDialogId
+				let sendTeamsMessageResponse = await sendTeamsMessage(
+					reqBody,
+					'JOINED'
+				)
+				console.log(
+					'let  agent_joined_avaya_send_Message_to_teams_response= ',
+					JSON.stringify(sendTeamsMessageResponse)
+				)
 			} else {
 			}
 		}
+
 		res.send('callback url working')
 	} catch (error) {
 		console.log('error in callback---> ', error)

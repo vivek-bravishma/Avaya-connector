@@ -1059,80 +1059,97 @@ export async function getLineUserDetails(userId) {
 // 	receivedAt: '2024-06-24T06:00:12.453Z',
 // 	lastUpdatedAt: '2024-06-24T06:00:12.459Z',
 // }
-export async function sendTeamsMessage(reqBody) {
+
+////////////////////
+
+// let type = reqBody.body.elementType
+// if (type === 'image') {
+// 	let imageUrl = reqBody.attachments[0].url
+// } else if (type === 'file') {
+// 	let fileUrl = reqBody.attachments[0].url
+// }
+// // if (type === 'text') {
+// let replyMsg = reqBody.body.elementText.text
+// // }
+
+// // let activityData = {
+// // 	//activities[0]
+// // 	type: 'message',
+// // 	from: {
+// // 		id: reqBody.senderParticipantId,
+// // 		name: reqBody.senderParticipantName,
+// // 		role: reqBody.senderParticipantType,
+// // 	},
+// // 	text: reqBody.body.elementText.text,
+// // 	// attachments:reqBody.
+// // }
+
+// let activityData = {
+// 	attachments: [
+// 		// {
+// 		// 	name: reqBody.attachments[0]?.name,
+// 		// 	contentType: reqBody.attachments[0]?.contentType,
+// 		// 	contentUrl: reqBody.attachments[0]?.url,
+// 		// },
+// 	],
+// 	channelData: {
+// 		// attachmentSizes: [reqBody.attachments[0]?.size],
+// 	},
+// 	type: 'message',
+// 	text: reqBody.body.elementText.text,
+// 	from: {
+// 		id: reqBody.senderParticipantId,
+// 		name: reqBody.senderParticipantName,
+// 		role: reqBody.senderParticipantType,
+// 	},
+// }
+export async function sendTeamsMessage(reqBody, messType) {
 	try {
-		let recipiant = reqBody.recipientParticipants[0].providerParticipantId
+		let recipiant = null
+		let activityData = null
 
-		// let type = reqBody.body.elementType
-		// if (type === 'image') {
-		// 	let imageUrl = reqBody.attachments[0].url
-		// } else if (type === 'file') {
-		// 	let fileUrl = reqBody.attachments[0].url
-		// }
-		// // if (type === 'text') {
-		// let replyMsg = reqBody.body.elementText.text
-		// // }
+		if (messType === 'MESSAGE') {
+			recipiant = reqBody.recipientParticipants[0].providerParticipantId
+			activityData = {
+				attachments: [],
+				channelData: {
+					attachmentSizes: [],
+				},
+				type: 'message',
+				text: reqBody.body.elementText.text,
+				from: {
+					id: reqBody.senderParticipantId,
+					name: reqBody.senderParticipantName,
+					role: reqBody.senderParticipantType,
+				},
+			}
 
-		// // let activityData = {
-		// // 	//activities[0]
-		// // 	type: 'message',
-		// // 	from: {
-		// // 		id: reqBody.senderParticipantId,
-		// // 		name: reqBody.senderParticipantName,
-		// // 		role: reqBody.senderParticipantType,
-		// // 	},
-		// // 	text: reqBody.body.elementText.text,
-		// // 	// attachments:reqBody.
-		// // }
+			if (reqBody.attachments && reqBody.attachments.length > 0) {
+				reqBody.attachments.forEach((attachment) => {
+					activityData.attachments.push({
+						name: attachment.name,
+						contentType: attachment.contentType,
+						contentUrl: attachment.url,
+					})
 
-		// let activityData = {
-		// 	attachments: [
-		// 		// {
-		// 		// 	name: reqBody.attachments[0]?.name,
-		// 		// 	contentType: reqBody.attachments[0]?.contentType,
-		// 		// 	contentUrl: reqBody.attachments[0]?.url,
-		// 		// },
-		// 	],
-		// 	channelData: {
-		// 		// attachmentSizes: [reqBody.attachments[0]?.size],
-		// 	},
-		// 	type: 'message',
-		// 	text: reqBody.body.elementText.text,
-		// 	from: {
-		// 		id: reqBody.senderParticipantId,
-		// 		name: reqBody.senderParticipantName,
-		// 		role: reqBody.senderParticipantType,
-		// 	},
-		// }
+					if (reqBody.attachmentSizes) {
+						activityData.channelData.attachmentSizes.push(
+							attachment.size
+						)
+					}
+				})
+			}
+		} else if (messType === 'JOINED') {
+			recipiant = reqBody.providerParticipantId
 
-		let activityData = {
-			attachments: [],
-			channelData: {
-				attachmentSizes: [],
-			},
-			type: 'message',
-			text: reqBody.body.elementText.text,
-			from: {
-				id: reqBody.senderParticipantId,
-				name: reqBody.senderParticipantName,
-				role: reqBody.senderParticipantType,
-			},
+			activityData = {
+				type: 'message',
+				text: `Your ticket has been assigned to ${reqBody.displayName}`,
+			}
 		}
 
-		if (reqBody.attachments && reqBody.attachments.length > 0) {
-			reqBody.attachments.forEach((attachment) => {
-				activityData.attachments.push({
-					name: attachment.name,
-					contentType: attachment.contentType,
-					contentUrl: attachment.url,
-				})
-
-				if (reqBody.attachmentSizes) {
-					activityData.channelData.attachmentSizes.push(
-						attachment.size
-					)
-				}
-			})
+		if (!recipiant || !activityData) {
+			return 'no recipiant or activity data'
 		}
 
 		const payload = {
@@ -1142,7 +1159,6 @@ export async function sendTeamsMessage(reqBody) {
 		console.log('let send_msg_to_teams_payload= ', JSON.stringify(payload))
 
 		let teamsResponse = await axios.post(TeamsBotUrl, payload)
-		// let resp = await axios.post(vonageSMSUrl, payload)
 		return teamsResponse.data
 	} catch (error) {
 		console.error('sendTeamsMessage error=> ', error)
