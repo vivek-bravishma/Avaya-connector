@@ -1181,6 +1181,7 @@ export async function startCopilotConvo(
 			token,
 			streamUrl,
 			username: username_teams,
+			caseNumber: null,
 		})
 
 		await setupCopilotBotSocket(
@@ -1234,6 +1235,10 @@ async function setupCopilotBotSocket(
 					eventData.activities[0]?.from?.role === 'bot' &&
 					eventData.activities[0]?.name === 'connectToAgent'
 				) {
+					console.log(
+						'connectToAgent eventData.activities[0]==> ',
+						eventData.activities[0]
+					)
 					let userDetails = teamsCopilotUsersMap.get(teamsConvoId)
 					userDetails.isEcalated = true
 					userDetails.mobileNumber = eventData.activities[0]?.value[1]
