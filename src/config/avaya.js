@@ -39,10 +39,12 @@ config = {
 	lineToken:
 		'rq19tBuwHiVU+icYou47lMaob8U1zM/sUCSZkYzwGRselsT4zpyMX6kmqZwcsbROKs38LvcgwFmLdUATef+X8C2AZb3wkKSeLqHwaBQHbssXQ2MeMWVpchNRLzrcGFxF+V4tXJjfvD7dmwuyHfhMwAdB04t89/1O/w1cDnyilFU=',
 
-	// TeamsBotUrl: 'https://bot3f0694.azurewebsites.net/api/msgwebhook',
-	TeamsBotUrl: 'http://localhost:3978/api/msgwebhook',
+	TeamsBotUrl: 'https://bot3f0694.azurewebsites.net/api/msgwebhook',
+	// TeamsBotUrl: 'http://localhost:3978/api/msgwebhook',
 
-	TeamsCaseItemRoutingBotURL: 'http://localhost:3978/api/msgwebhook',
+	TeamsCaseItemRoutingBotURL:
+		'https://boteb89e1.azurewebsites.net/api/msgwebhook',
+	// TeamsCaseItemRoutingBotURL: 'http://localhost:3978/api/msgwebhook',
 
 	JourneyIFrameUrl: `${config.journeyBaseUrl}/api/iframe/executions`,
 	JourneySystemUrl: `${config.journeyBaseUrl}/api/system/executions`,
