@@ -417,7 +417,8 @@ app.post('/callback', async (req, res) => {
 					} else if (channel === 'custom_teams_copilot_provider') {
 						let sendTeamsMessageResponse = await sendTeamsMessage(
 							reqBody,
-							'MESSAGE'
+							'MESSAGE',
+							teamsCopilotUsersMap
 						)
 						console.log(
 							'let avaya_send_Message_to_teams_response= ',
@@ -486,7 +487,8 @@ app.post('/callback', async (req, res) => {
 				// let clientId=reqBody.providerDialogId
 				let sendTeamsMessageResponse = await sendTeamsMessage(
 					reqBody,
-					'JOINED'
+					'JOINED',
+					teamsCopilotUsersMap
 				)
 				console.log(
 					'let  agent_joined_avaya_send_Message_to_teams_response= ',
@@ -941,10 +943,13 @@ app.post('/teams-copilot-callback', async (req, res) => {
 
 app.post('/teams-copilot-init-callback', async (req, res) => {
 	console.log('// Post teams-copilot-init-callback')
-	// console.log('req body==> ', req.body)
+	console.log('req body==> ', req.body)
 
-	let conversationId = req.body.conversation.id
-	let username_teams = req.body.from.name
+	let contextActivity = req.body.contextActivity
+	let copilotbotName = req.body.copilotbotName
+
+	let conversationId = contextActivity.conversation.id
+	let username_teams = contextActivity.from.name
 
 	// console.log('convo id=============> ', conversationId)
 
@@ -955,7 +960,8 @@ app.post('/teams-copilot-init-callback', async (req, res) => {
 	await startCopilotConvo(
 		teamsCopilotUsersMap,
 		conversationId,
-		username_teams
+		username_teams,
+		copilotbotName
 	)
 	// } else {
 	// 	console.log('something is wrong you should not be here')

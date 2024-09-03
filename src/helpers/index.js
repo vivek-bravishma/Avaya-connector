@@ -31,6 +31,7 @@ const {
 	integrationName,
 	grant_type,
 	copilotToken,
+	caseItemRoutingBotToken,
 	accessTokenUrl,
 	createSubscriptionUrl,
 	sendMsgUrl,
@@ -49,6 +50,7 @@ const {
 	lineToken,
 	VIBER_SERVICE_MESSAGE_ID,
 	TeamsBotUrl,
+	TeamsCaseItemRoutingBotURL,
 	JourneyIFrameUrl,
 	JourneySystemUrl,
 } = avayaConfig
@@ -1103,10 +1105,23 @@ export async function getLineUserDetails(userId) {
 // 		role: reqBody.senderParticipantType,
 // 	},
 // }
-export async function sendTeamsMessage(reqBody, messType) {
+export async function sendTeamsMessage(
+	reqBody,
+	messType,
+	teamsCopilotUsersMap
+) {
 	try {
 		let recipiant = null
 		let activityData = null
+
+		teamsCopilotUsersMap?.forEach((value, key) =>
+			console.log(
+				'teamsCopilotUsersMap===================== ',
+				key,
+				' = ',
+				value
+			)
+		)
 
 		if (messType === 'MESSAGE') {
 			recipiant = reqBody.recipientParticipants[0].providerParticipantId
@@ -1152,13 +1167,18 @@ export async function sendTeamsMessage(reqBody, messType) {
 			return 'no recipiant or activity data'
 		}
 
+		let teamsUser = teamsCopilotUsersMap.get(recipiant)
+
 		const payload = {
 			conversationId: recipiant,
 			activityData: activityData,
 		}
 		console.log('let send_msg_to_teams_payload= ', JSON.stringify(payload))
 
-		let teamsResponse = await axios.post(TeamsBotUrl, payload)
+		let teamsResponse = await axios.post(
+			teamsUser.copilotDetails.TeamsBotUrl,
+			payload
+		)
 		return teamsResponse.data
 	} catch (error) {
 		console.error('sendTeamsMessage error=> ', error)
@@ -1166,15 +1186,41 @@ export async function sendTeamsMessage(reqBody, messType) {
 	}
 }
 
+const copilotDets = (copilotbotName) => {
+	switch (copilotbotName) {
+		case 'IT_SUPPORT':
+			return {
+				copilotToken: copilotToken,
+				TeamsBotUrl: TeamsBotUrl,
+			}
+
+		case 'CASE_ITEM_ROUTING':
+			return {
+				copilotToken: caseItemRoutingBotToken,
+				TeamsBotUrl: TeamsCaseItemRoutingBotURL,
+			}
+
+		default:
+			return {
+				copilotToken: copilotToken,
+				TeamsBotUrl: TeamsBotUrl,
+			}
+	}
+}
+
 export async function startCopilotConvo(
 	teamsCopilotUsersMap,
 	teamsConvoId,
-	username_teams
+	username_teams,
+	copilotbotName
 ) {
 	try {
+		let copilotDetails = copilotDets(copilotbotName)
+		console.log('copilotDetails==> ', copilotDetails)
+
 		const config = {
 			headers: {
-				Authorization: `Bearer ${copilotToken}`,
+				Authorization: `Bearer ${copilotDetails.copilotToken}`,
 			},
 		}
 		const { conversationId, token, streamUrl } = (
@@ -1185,10 +1231,6 @@ export async function startCopilotConvo(
 			)
 		).data
 
-		// console.log('Conversation ID:', conversationId)
-		// console.log('Token:', token)
-		// console.log('WebSocket Stream URL:', streamUrl)
-
 		teamsCopilotUsersMap.set(teamsConvoId, {
 			isEcalated: false,
 			mobileNumber: null,
@@ -1198,12 +1240,14 @@ export async function startCopilotConvo(
 			streamUrl,
 			username: username_teams,
 			caseNumber: null,
+			copilotDetails,
 		})
 
 		await setupCopilotBotSocket(
 			streamUrl,
 			teamsConvoId,
-			teamsCopilotUsersMap
+			teamsCopilotUsersMap,
+			copilotDetails
 		)
 		const conversationDetails = {
 			conversationId: conversationId,
@@ -1222,9 +1266,11 @@ export async function startCopilotConvo(
 async function setupCopilotBotSocket(
 	streamUrl,
 	teamsConvoId,
-	teamsCopilotUsersMap
+	teamsCopilotUsersMap,
+	copilotDetails
 ) {
 	const ws = new WebSocket(streamUrl)
+	console.log('setupCopilotBotSocket')
 
 	// WebSocket event listeners
 	ws.on('open', () => {
@@ -1233,6 +1279,7 @@ async function setupCopilotBotSocket(
 
 	ws.on('message', (event) => {
 		const message = event.toString('utf-8')
+		// console.log('message from copilot botWebSocket ', JSON.parse(message))
 		if (message.length < 1) {
 			return
 		}
@@ -1243,6 +1290,7 @@ async function setupCopilotBotSocket(
 				eventData.activities[0]?.from?.role === 'bot' &&
 					sendTeamsMessageFromCopilotBot(
 						teamsConvoId,
+						copilotDetails,
 						eventData.activities[0]
 					)
 			}
@@ -1312,7 +1360,7 @@ async function sendInitialMessage(conversationDetails) {
 
 		const response = await axios.post(url, body, { headers })
 
-		// console.log('//Initial message sent:', response.data)
+		// console.log('//Initial message payload:=>  ', url, body, headers)
 		console.log('//Initial message sent')
 		return response.data // Optional: Return data if needed
 	} catch (error) {
@@ -1390,6 +1438,7 @@ export async function sendCopilotAiBotMsg(conversionDetails, message) {
 
 export async function sendTeamsMessageFromCopilotBot(
 	teamsConvoId,
+	copilotDetails,
 	activityData
 ) {
 	try {
@@ -1399,7 +1448,10 @@ export async function sendTeamsMessageFromCopilotBot(
 		}
 		// console.log('teams_payload= ', payload)
 
-		let teamsResponse = await axios.post(TeamsBotUrl, payload)
+		let teamsResponse = await axios.post(
+			copilotDetails.TeamsBotUrl,
+			payload
+		)
 		// let resp = await axios.post(vonageSMSUrl, payload)
 		return teamsResponse
 	} catch (error) {
@@ -1439,7 +1491,7 @@ export async function sendMessageFromTeamsToAvaya({
 
 	let attachmentsTemp = messageData?.attachments
 
-	let attachments = attachmentsTemp.filter(
+	let attachments = attachmentsTemp?.filter(
 		(ele) => !ele.contentType.includes('text')
 	)
 
