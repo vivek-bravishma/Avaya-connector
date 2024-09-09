@@ -926,27 +926,36 @@ export async function sendCustomProviderMessage(io, socketId, reqBody) {
 	io.to(socketId).emit('message', payload)
 }
 
-export async function getAllCopilotMessages(copilotId) {
+export async function getAllCopilotMessages(copilotId, copilotTeamsConvoToken) {
 	try {
 		console.log('copilotId==> ', copilotId)
-		console.log('copilotToken==> ', copilotToken)
+		let token = copilotTeamsConvoToken
+			? copilotTeamsConvoToken
+			: copilotToken
 
+		console.log('copilotToken==> ', token)
 		var options = {
 			method: 'GET',
 			url: `https://directline.botframework.com/v3/directline/conversations/${copilotId}/activities`,
 			headers: {
 				Accept: '*/*',
-				Authorization: `Bearer ${copilotToken}`,
+				Authorization: `Bearer ${token}`,
 			},
 		}
+
+		console.log('getAllCopilotMessages options==> ', options)
 
 		let resp = await axios.request(options)
 
 		let messages = serializeCopilotMessage(resp?.data?.activities)
 		return messages
 	} catch (error) {
-		console.error('getAllCopilotMessages error=> ', error)
-		return error
+		console.error('getAllCopilotMessages error message=> ', error.message)
+		console.error(
+			'getAllCopilotMessages error resp data=> ',
+			error.response?.data
+		)
+		return error.response?.message
 	}
 }
 
@@ -1192,18 +1201,21 @@ const copilotDets = (copilotbotName) => {
 			return {
 				copilotToken: copilotToken,
 				TeamsBotUrl: TeamsBotUrl,
+				copilotbotName: copilotbotName,
 			}
 
 		case 'CASE_ITEM_ROUTING':
 			return {
 				copilotToken: caseItemRoutingBotToken,
 				TeamsBotUrl: TeamsCaseItemRoutingBotURL,
+				copilotbotName: copilotbotName,
 			}
 
 		default:
 			return {
 				copilotToken: copilotToken,
 				TeamsBotUrl: TeamsBotUrl,
+				copilotbotName: copilotbotName,
 			}
 	}
 }
@@ -1216,7 +1228,7 @@ export async function startCopilotConvo(
 ) {
 	try {
 		let copilotDetails = copilotDets(copilotbotName)
-		console.log('copilotDetails==> ', copilotDetails)
+		console.log('copilotDetails= ', copilotDetails)
 
 		const config = {
 			headers: {
@@ -1231,10 +1243,12 @@ export async function startCopilotConvo(
 			)
 		).data
 
+		console.log('yo_name=', username_teams)
+
 		teamsCopilotUsersMap.set(teamsConvoId, {
 			isEcalated: false,
 			mobileNumber: null,
-			username_teams,
+			username_teams: username_teams,
 			copilotConversationId: conversationId,
 			token,
 			streamUrl,
@@ -1242,6 +1256,15 @@ export async function startCopilotConvo(
 			caseNumber: null,
 			copilotDetails,
 		})
+
+		teamsCopilotUsersMap.forEach((value, key) =>
+			console.log(
+				`//ffffffff - teamsCopilotUsersMap==> ${teamsConvoId} `,
+				key,
+				' = ',
+				value
+			)
+		)
 
 		await setupCopilotBotSocket(
 			streamUrl,
@@ -1303,6 +1326,16 @@ async function setupCopilotBotSocket(
 						'connectToAgent eventData.activities[0]==> ',
 						eventData.activities[0]
 					)
+
+					teamsCopilotUsersMap.forEach((value, key) =>
+						console.log(
+							`//connection - teamsCopilotUsersMap==> ${teamsConvoId} `,
+							key,
+							' = ',
+							value
+						)
+					)
+
 					let userDetails = teamsCopilotUsersMap.get(teamsConvoId)
 					userDetails.isEcalated = true
 					userDetails.mobileNumber = eventData.activities[0]?.value[1]
@@ -1310,8 +1343,10 @@ async function setupCopilotBotSocket(
 					userDetails.caseNumber = eventData.activities[0]?.value[2]
 					teamsCopilotUsersMap.set(teamsConvoId, userDetails)
 
+					console.log('wtf=', userDetails)
+
 					sendMessage(
-						userDetails.username,
+						userDetails.username_teams,
 						'connect to agent',
 						teamsConvoId,
 						'custom_teams_copilot_provider',
@@ -1479,6 +1514,9 @@ export async function sendMessageFromTeamsToAvaya({
 	let message_type = 'text'
 	let fileDetails = undefined
 	let locationDetails = undefined
+
+	console.log('teamsUserData==============> ', teamsUserData)
+	console.log('messageData==============> ', messageData)
 
 	let mobileNumber = teamsUserData?.mobileNumber
 	// let mobileNumber = maskNumber(teamsUserData?.mobileNumber)

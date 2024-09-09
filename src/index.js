@@ -806,15 +806,25 @@ app.get('/copilot-messages', async (req, res) => {
 				)
 			)
 
+			let copilotTeamsUserData = teamsCopilotUsersMap.get(socketId)
+
 			let copilotTeamsConvoId =
-				teamsCopilotUsersMap.get(socketId)?.copilotConversationId
+				copilotTeamsUserData?.copilotConversationId
+
+			let copilotTeamsConvoToken =
+				copilotTeamsUserData?.copilotDetails?.copilotToken
+
 			console.log('copilotTeamsConvoId==> ', copilotTeamsConvoId)
+			console.log('copilotTeamsConvoToken==> ', copilotTeamsConvoToken)
+			console.log('copilotTeamsUserData==> ', copilotTeamsUserData)
 
 			if (!copilotTeamsConvoId) {
 				res.send('invalid customer id')
 			} else {
-				let copilotMessages =
-					await getAllCopilotMessages(copilotTeamsConvoId)
+				let copilotMessages = await getAllCopilotMessages(
+					copilotTeamsConvoId,
+					copilotTeamsConvoToken
+				)
 				console.log('copilotTeamsMessages=> ', copilotMessages)
 				res.send(copilotMessages)
 			}
@@ -891,8 +901,14 @@ app.post('/teams-copilot-callback', async (req, res) => {
 
 	// contentType: 'application/vnd.microsoft.teams.file.download.info'
 	// attachments: [ { contentType: 'text/html', content: '<p>hi</p>' } ],
-	// console.log('convo id====== copilot =======> ', conversationId)
+	console.log(
+		'//convo id====== copilot =======> \n username_teams= ',
+		username_teams
+	)
 	let teamsCopilotUserDets = teamsCopilotUsersMap.get(conversationId)
+	teamsCopilotUserDets.username_teams = username_teams
+	teamsCopilotUsersMap.set(teamsCopilotUserDets)
+
 	// console.log(
 	// 	'teamsCopilotUserDets=====copilot ======> ',
 	// 	teamsCopilotUserDets
