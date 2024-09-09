@@ -1345,8 +1345,29 @@ async function setupCopilotBotSocket(
 
 					console.log('wtf=', userDetails)
 
+					// copilotbotName
+					let user_name = userDetails.username_teams
+					if (
+						userDetails?.copilotDetails?.copilotbotName ===
+						'CASE_ITEM_ROUTING'
+					) {
+						user_name = eventData.activities[0]?.value[2]
+							? eventData.activities[0]?.value[2]
+							: userDetails.username_teams
+					}
+
+					console.log('user_name=', user_name)
+					console.log(
+						'eventData_activities_value=',
+						eventData.activities[0]?.value[2]
+					)
+					console.log(
+						'userDetails_copilotDetails_copilotbotName=',
+						userDetails?.copilotDetails?.copilotbotName
+					)
+
 					sendMessage(
-						userDetails.username_teams,
+						user_name,
 						'connect to agent',
 						teamsConvoId,
 						'custom_teams_copilot_provider',
@@ -1597,8 +1618,15 @@ export async function sendMessageFromTeamsToAvaya({
 	// 	else if (contentType === 'application') message_type = 'file'
 	// }
 
+	let user_name = username_teams
+	if (teamsUserData?.copilotDetails?.copilotbotName === 'CASE_ITEM_ROUTING') {
+		user_name = teamsUserData?.caseNumber
+			? teamsUserData?.caseNumber
+			: username_teams
+	}
+
 	let resp = await sendMessage(
-		username_teams,
+		user_name,
 		text,
 		conversationId,
 		channel,
