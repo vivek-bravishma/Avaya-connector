@@ -1310,6 +1310,10 @@ async function setupCopilotBotSocket(
 			const eventData = JSON.parse(message)
 			// console.log('let IncomingMessage =', JSON.stringify(eventData))
 			if (eventData?.activities[0].type === 'message') {
+				console.log(
+					'copilot_message_activity_data= ',
+					eventData.activities[0]
+				)
 				eventData.activities[0]?.from?.role === 'bot' &&
 					sendTeamsMessageFromCopilotBot(
 						teamsConvoId,

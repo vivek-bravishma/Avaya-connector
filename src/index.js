@@ -895,9 +895,12 @@ app.post('/teams-copilot-callback', async (req, res) => {
 		JSON.stringify(req.body)
 	)
 
-	let conversationId = req.body.conversation.id
-	let username_teams = req.body.from.name
-	let text = req.body.text
+	let contextActivity = req.body.contextActivity
+	let copilotbotName = req.body.copilotbotName
+
+	let conversationId = contextActivity.conversation.id
+	let username_teams = contextActivity.from.name
+	let text = contextActivity.text
 
 	// contentType: 'application/vnd.microsoft.teams.file.download.info'
 	// attachments: [ { contentType: 'text/html', content: '<p>hi</p>' } ],
@@ -906,45 +909,44 @@ app.post('/teams-copilot-callback', async (req, res) => {
 		username_teams
 	)
 	let teamsCopilotUserDets = teamsCopilotUsersMap.get(conversationId)
-	teamsCopilotUserDets.username_teams = username_teams
-	teamsCopilotUsersMap.set(teamsCopilotUserDets)
-
-	// console.log(
-	// 	'teamsCopilotUserDets=====copilot ======> ',
-	// 	teamsCopilotUserDets
-	// )
-
-	// console.log('dets===> ', username_teams, text, conversationId, message_type)
-	// console.log(
-	// 	'req.body.attachments?.[0]?.contentType==> ',
-	// 	req.body.attachments?.[0]?.contentType
-	// )
+	console.log('teamscopilotuserDets=', teamsCopilotUserDets)
+	if (teamsCopilotUserDets) {
+		teamsCopilotUserDets.username_teams = username_teams
+		teamsCopilotUsersMap.set(teamsCopilotUserDets)
+	}
 
 	if (teamsCopilotUserDets === undefined) {
 		console.log('/teams-copilot-callback initial msg')
 		await startCopilotConvo(
 			teamsCopilotUsersMap,
 			conversationId,
-			username_teams
+			username_teams,
+			copilotbotName
 		)
 	} else if (teamsCopilotUserDets.isEcalated === true) {
-		let teamsUserData = teamsCopilotUsersMap.get(conversationId)
+		// let teamsUserData = teamsCopilotUsersMap.get(conversationId)
 
 		console.log('//teamsUserData Ecalated ')
 
 		let resp = await sendMessageFromTeamsToAvaya({
-			teamsUserData,
-			messageData: req.body,
+			// teamsUserData,
+			teamsCopilotUserDets,
+			messageData: contextActivity,
 		})
 		console.log('resss=> ', resp)
 	} else {
-		let teamsUserData = teamsCopilotUsersMap.get(conversationId)
 		console.log('//teamsUserData not isEcalated==> ')
-		// console.log('teamsUserData not isEcalated==> ', teamsUserData)
+		// let teamsUserData = teamsCopilotUsersMap.get(conversationId)
+		// // console.log('teamsUserData not isEcalated==> ', teamsUserData)
+		// let conversionDetails = {
+		// 	conversationId: teamsUserData.copilotConversationId,
+		// 	streamUrl: teamsUserData.streamUrl,
+		// 	token: teamsUserData.token,
+		// }
 		let conversionDetails = {
-			conversationId: teamsUserData.copilotConversationId,
-			streamUrl: teamsUserData.streamUrl,
-			token: teamsUserData.token,
+			conversationId: teamsCopilotUserDets.copilotConversationId,
+			streamUrl: teamsCopilotUserDets.streamUrl,
+			token: teamsCopilotUserDets.token,
 		}
 
 		await sendCopilotAiBotMsg(conversionDetails, text)
