@@ -83,6 +83,8 @@ export async function fetchAccessToken() {
 			},
 		}
 
+		console.log('option=======================> ', options)
+
 		let resp = await axios.request(options)
 		// console.log('resp. toke====> ', resp.data)
 		return resp.data
@@ -188,6 +190,18 @@ export async function sendMessage(
 			}
 		}
 		console.log('//Sending Message')
+
+		//  channel==='custom_teams_copilot_provider'? 'itsupport':'customch',
+		let engagementKey =
+			channel === 'custom_teams_copilot_provider'
+				? 'itsupport'
+				: 'customch'
+
+		let engagementVal =
+			channel === 'custom_teams_copilot_provider'
+				? 'itsupport'
+				: 'customch'
+
 		var options = {
 			method: 'POST',
 			url: sendMsgUrl,
@@ -218,7 +232,8 @@ export async function sendMessage(
 				},
 				engagementParameters: {
 					// customch: 'customch',
-					itsupport: 'itsupport',
+					// itsupport: 'itsupport',
+					[engagementKey]: engagementVal,
 					customerMobileNo: mobileNumber ? mobileNumber : '',
 					caseNumber: caseNumber ? caseNumber : '',
 				},
@@ -228,7 +243,7 @@ export async function sendMessage(
 		console.log('let avaya_send_msg_payload= ', JSON.stringify(options))
 
 		let resp = await axios.request(options)
-		// console.log('send message response data==> ', resp.data)
+		console.log('send message response data==> ', resp.data)
 		return resp.data
 	} catch (error) {
 		if (error.response?.data) {
