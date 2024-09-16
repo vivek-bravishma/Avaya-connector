@@ -217,7 +217,8 @@ export async function sendMessage(
 					sourceType: channel,
 				},
 				engagementParameters: {
-					customch: 'customch',
+					// customch: 'customch',
+					itsupport: 'itsupport',
 					customerMobileNo: mobileNumber ? mobileNumber : '',
 					caseNumber: caseNumber ? caseNumber : '',
 				},
